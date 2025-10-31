@@ -10,15 +10,14 @@ services:
     devices:
       - /dev/net/tun:/dev/net/tun
     environment:
-      - VPN_SERVICE_PROVIDER=${VPN_SERVICE_PROVIDER}
+      - VPN_SERVICE_PROVIDER=${VPN_SERVICE_PROVIDER? "Please set the VPN_SERVICE_PROVIDER environment variable"}
       - VPN_TYPE=wireguard
-      - WIREGUARD_PRIVATE_KEY=${WIREGUARD_PRIVATE_KEY}
-      - WIREGUARD_PRESHARED_KEY=${WIREGUARD_PRESHARED_KEY}
-      - WIREGUARD_ADDRESSES=${WIREGUARD_ADDRESSES}
-      - SERVER_REGIONS=${SERVER_REGIONS}
-      - SERVER_COUNTRIES=${SERVER_COUNTRIES}
-      - FIREWALL_OUTBOUND_SUBNETS=${FIREWALL_OUTBOUND_SUBNETS}
-      - FIREWALL_VPN_INPUT_PORTS=${FIREWALL_VPN_INPUT_PORTS}
+      - WIREGUARD_PRIVATE_KEY=${WIREGUARD_PRIVATE_KEY? "Please set the WIREGUARD_PRIVATE_KEY environment variable"}
+      - WIREGUARD_PRESHARED_KEY=${WIREGUARD_PRESHARED_KEY? "Please set the WIREGUARD_PRESHARED_KEY environment variable"}
+      - WIREGUARD_ADDRESSES=${WIREGUARD_ADDRESSES? "Please set the WIREGUARD_ADDRESSES environment variable"}
+      - SERVER_REGIONS=${SERVER_REGIONS? "Please set the SERVER_REGIONS environment variable"}
+      - SERVER_COUNTRIES=${SERVER_COUNTRIES? "Please set the SERVER_COUNTRIES environment variable"}
+      - FIREWALL_OUTBOUND_SUBNETS=${FIREWALL_OUTBOUND_SUBNETS? "Please set the FIREWALL_OUTBOUND_SUBNETS environment variable"}
     configs:
       - source: post-rules.txt
         target: /iptables/post-rules.txt
