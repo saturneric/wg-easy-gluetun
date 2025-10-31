@@ -2,8 +2,8 @@ version: "3"
 
 services:
   gluetun:
-    image: qmcgaw/gluetun
-    container_name: gluetun-ws
+    build:
+      dockerfile: ./Dockerfile.gluetun
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
@@ -12,18 +12,18 @@ services:
     environment:
       - VPN_SERVICE_PROVIDER=${VPN_SERVICE_PROVIDER? "Please set the VPN_SERVICE_PROVIDER environment variable"}
       - VPN_TYPE=wireguard
+      - WIREGUARD_ENDPOINT_IP=${WIREGUARD_ENDPOINT_IP}
+      - WIREGUARD_ENDPOINT_PORT=${WIREGUARD_ENDPOINT_PORT}
+      - WIREGUARD_PUBLIC_KEY=${WIREGUARD_PUBLIC_KEY}
       - WIREGUARD_PRIVATE_KEY=${WIREGUARD_PRIVATE_KEY? "Please set the WIREGUARD_PRIVATE_KEY environment variable"}
       - WIREGUARD_PRESHARED_KEY=${WIREGUARD_PRESHARED_KEY? "Please set the WIREGUARD_PRESHARED_KEY environment variable"}
       - WIREGUARD_ADDRESSES=${WIREGUARD_ADDRESSES? "Please set the WIREGUARD_ADDRESSES environment variable"}
-      - SERVER_REGIONS=${SERVER_REGIONS? "Please set the SERVER_REGIONS environment variable"}
-      - SERVER_COUNTRIES=${SERVER_COUNTRIES? "Please set the SERVER_COUNTRIES environment variable"}
+      - SERVER_REGIONS=${SERVER_REGIONS}
+      - SERVER_COUNTRIES=${SERVER_COUNTRIES}
       - FIREWALL_OUTBOUND_SUBNETS=${FIREWALL_OUTBOUND_SUBNETS? "Please set the FIREWALL_OUTBOUND_SUBNETS environment variable"}
-    configs:
-      - source: post-rules.txt
-        target: /iptables/post-rules.txt
     volumes:
       - /lib/modules:/lib/modules:ro
-      - /data/gluetun-ws:/gluetun
+      - gluetun-data:/gluetun
     sysctls:
       - net.ipv4.ip_forward=1
       - net.ipv4.conf.all.src_valid_mark=1
@@ -34,16 +34,14 @@ services:
       vpn:
         ipv4_address: 172.32.0.4
         ipv6_address: "fd01:beee:beee::4"
-    ports:
-      - 53:53/udp # DNS
-      - 53:53/tcp # DNS
     restart: unless-stopped
 
   wg-easy:
-    image: ghcr.io/wg-easy/wg-easy:15
-    container_name: wg-easy
+    build:
+      dockerfile: ./Dockerfile
     ports:
       - "51820:51820/udp"
+      - "51821:51821/tcp"
     networks:
       vpn:
         ipv4_address: 172.32.0.8
@@ -57,15 +55,18 @@ services:
       - net.ipv6.conf.all.disable_ipv6=0
       - net.ipv6.conf.all.forwarding=1
       - net.ipv6.conf.default.forwarding=1
-    configs:
-      - source: wg-post-up.txt
-        target: /hooks/wg-post-up.txt
-      - source: wg-post-down.txt
-        target: /hooks/wg-post-down.txt
+    environment:
+      - INIT_PORT=${INIT_PORT}
+      - INIT_IPV4_CIDR=${INIT_IPV4_CIDR}
+      - INIT_IPV6_CIDR=${INIT_IPV6_CIDR}
     volumes:
       - /lib/modules:/lib/modules:ro
-      - /data/wg-easy:/etc/wireguard
+      - wg-easy-data:/etc/wireguard
     restart: unless-stopped
+
+volumes:
+  gluetun-data:
+  wg-easy-data:
 
 networks:
   vpn:
@@ -78,99 +79,3 @@ networks:
           gateway: 172.32.0.1
         - subnet: fd01:beee:beee::/48
           gateway: fd01:beee:beee::1
-
-configs:
-  post-rules.txt:
-    content: |
-      iptables -A FORWARD -i eth0 -o tun0 -j ACCEPT
-      iptables -A FORWARD -i tun0 -o eth0 -m state --state RELATED,ESTABLISHED -j ACCEPT
-      iptables -t nat -A POSTROUTING -o tun0 -j MASQUERADE
-      ip6tables -I INPUT -p icmpv6 -j ACCEPT
-      ip6tables -I OUTPUT -p icmpv6 -j ACCEPT
-      ip6tables -A FORWARD -i eth0 -o tun0 -j ACCEPT
-      ip6tables -A FORWARD -i tun0 -o eth0 -m state --state RELATED,ESTABLISHED -j ACCEPT
-      ip6tables -t nat -A POSTROUTING -o tun0 -j MASQUERADE
-
-  wg-post-up.txt:
-    content: |
-      VPN=$(ifconfig | grep -B1 172.32.0.4 | grep -o "^\w*"); 
-
-      iptables -P FORWARD DROP; 
-      ip6tables -P FORWARD DROP; 
-
-      iptables -A INPUT -p udp -m udp --dport {{port}} -j ACCEPT; 
-      ip6tables -A INPUT -p udp -m udp --dport {{port}} -j ACCEPT; 
-
-      iptables -A OUTPUT -o $VPN -d 172.32.0.4 -p udp --dport 53 -j ACCEPT; 
-      iptables -A OUTPUT -o $VPN -d 172.32.0.4 -p tcp --dport 53 -j ACCEPT; 
-      ip6tables -A OUTPUT -o $VPN -d fd01:beee:beee::4 -p udp --dport 53 -j ACCEPT; 
-      ip6tables -A OUTPUT -o $VPN -d fd01:beee:beee::4 -p tcp --dport 53 -j ACCEPT; 
-
-      iptables -A OUTPUT -p tcp --dport 53 -j REJECT; 
-      iptables -A OUTPUT -p udp --dport 53 -j REJECT; 
-
-      ip6tables -A OUTPUT -p tcp --dport 53 -j REJECT; 
-      ip6tables -A OUTPUT -p udp --dport 53 -j REJECT; 
-
-      iptables -A FORWARD -i wg0 -j ACCEPT; 
-      iptables -A FORWARD -o wg0 -m state --state RELATED,ESTABLISHED -j ACCEPT; 
-      iptables -A FORWARD -s {{ipv4Cidr}} -d {{ipv4Cidr}} -i wg0 -o wg0 -j ACCEPT; 
-
-      ip6tables -A FORWARD -i wg0 -j ACCEPT; 
-      ip6tables -A FORWARD -o wg0 -m state --state RELATED,ESTABLISHED -j ACCEPT; 
-      ip6tables -A FORWARD -s {{ipv6Cidr}} -d {{ipv6Cidr}} -i wg0 -o wg0 -j ACCEPT; 
-
-      iptables -t nat -A POSTROUTING -s {{ipv4Cidr}} -o $VPN -j MASQUERADE; 
-      ip6tables -t nat -A POSTROUTING -s {{ipv6Cidr}} -o $VPN -j MASQUERADE; 
-
-      ip rule add from {{ipv4Cidr}} table 200; 
-      ip route add default via 172.32.0.4 dev $VPN table 200; 
-      ip route add 172.32.0.0/16 via 172.32.0.1 dev $VPN table 200; 
-      ip route add 10.8.0.0/24 dev wg0 table 200; 
-
-      ip -6 rule add from {{ipv6Cidr}} table 200; 
-      ip -6 route add default via fd01:beee:beee::4 dev $VPN table 200; 
-      ip -6 route add fd01:beee:beee::/48 via fd01:beee:beee::1 dev $VPN table 200; 
-      ip -6 route add {{ipv6Cidr}} dev wg0 table 200;
-
-  wg-post-down.txt:
-    content: |
-      VPN=$(ifconfig | grep -B1 172.32.0.4 | grep -o "^\w*"); 
-
-      iptables -P FORWARD DROP; 
-      ip6tables -P FORWARD DROP; 
-
-      iptables -D INPUT -p udp -m udp --dport {{port}} -j ACCEPT; 
-      ip6tables -D INPUT -p udp -m udp --dport {{port}} -j ACCEPT; 
-
-      iptables -D OUTPUT -o $VPN -d 172.32.0.4 -p udp --dport 53 -j ACCEPT; 
-      iptables -D OUTPUT -o $VPN -d 172.32.0.4 -p tcp --dport 53 -j ACCEPT; 
-      ip6tables -D OUTPUT -o $VPN -d fd01:beee:beee::4 -p udp --dport 53 -j ACCEPT; 
-      ip6tables -D OUTPUT -o $VPN -d fd01:beee:beee::4 -p tcp --dport 53 -j ACCEPT; 
-
-      iptables -D OUTPUT -p tcp --dport 53 -j REJECT; 
-      iptables -D OUTPUT -p udp --dport 53 -j REJECT; 
-
-      ip6tables -D OUTPUT -p tcp --dport 53 -j REJECT; 
-      ip6tables -D OUTPUT -p udp --dport 53 -j REJECT; 
-
-      iptables -D FORWARD -i wg0 -j ACCEPT; 
-      iptables -D FORWARD -o wg0 -m state --state RELATED,ESTABLISHED -j ACCEPT; 
-      iptables -D FORWARD -s {{ipv4Cidr}} -d {{ipv4Cidr}} -i wg0 -o wg0 -j ACCEPT; 
-
-      ip6tables -D FORWARD -i wg0 -j ACCEPT; 
-      ip6tables -D FORWARD -o wg0 -m state --state RELATED,ESTABLISHED -j ACCEPT; 
-      ip6tables -D FORWARD -s {{ipv6Cidr}} -d {{ipv6Cidr}} -i wg0 -o wg0 -j ACCEPT; 
-
-      iptables -t nat -D POSTROUTING -s {{ipv4Cidr}} -o $VPN -j MASQUERADE; 
-      ip6tables -t nat -D POSTROUTING -s {{ipv6Cidr}} -o $VPN -j MASQUERADE; 
-
-      ip rule del from {{ipv4Cidr}} table 200; 
-      ip route del default via 172.32.0.4 dev $VPN table 200; 
-      ip route del 172.32.0.0/16 via 172.32.0.1 dev $VPN table 200; 
-      ip route del 10.8.0.0/24 dev wg0 table 200; 
-
-      ip -6 rule del from {{ipv6Cidr}} table 200; 
-      ip -6 route del default via fd01:beee:beee::4 dev $VPN table 200; 
-      ip -6 route del fd01:beee:beee::/48 via fd01:beee:beee::1 dev $VPN table 200; 
-      ip -6 route del {{ipv6Cidr}} dev wg0 table 200;
