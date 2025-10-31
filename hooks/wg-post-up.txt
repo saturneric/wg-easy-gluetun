@@ -1,0 +1,39 @@
+VPN=$(ifconfig | grep -B1 172.32.0.8 | grep -o "^\w*"); 
+
+iptables -P FORWARD DROP; 
+ip6tables -P FORWARD DROP; 
+
+iptables -A INPUT -p udp -m udp --dport {{port}} -j ACCEPT; 
+ip6tables -A INPUT -p udp -m udp --dport {{port}} -j ACCEPT; 
+
+iptables -A OUTPUT -o $VPN -d 172.32.0.4 -p udp --dport 53 -j ACCEPT; 
+iptables -A OUTPUT -o $VPN -d 172.32.0.4 -p tcp --dport 53 -j ACCEPT; 
+ip6tables -A OUTPUT -o $VPN -d fd01:beee:beee::4 -p udp --dport 53 -j ACCEPT; 
+ip6tables -A OUTPUT -o $VPN -d fd01:beee:beee::4 -p tcp --dport 53 -j ACCEPT; 
+
+iptables -A OUTPUT -p tcp --dport 53 -j REJECT; 
+iptables -A OUTPUT -p udp --dport 53 -j REJECT; 
+
+ip6tables -A OUTPUT -p tcp --dport 53 -j REJECT; 
+ip6tables -A OUTPUT -p udp --dport 53 -j REJECT; 
+
+iptables -A FORWARD -i wg0 -j ACCEPT; 
+iptables -A FORWARD -o wg0 -m state --state RELATED,ESTABLISHED -j ACCEPT; 
+iptables -A FORWARD -s {{ipv4Cidr}} -d {{ipv4Cidr}} -i wg0 -o wg0 -j ACCEPT; 
+
+ip6tables -A FORWARD -i wg0 -j ACCEPT; 
+ip6tables -A FORWARD -o wg0 -m state --state RELATED,ESTABLISHED -j ACCEPT; 
+ip6tables -A FORWARD -s {{ipv6Cidr}} -d {{ipv6Cidr}} -i wg0 -o wg0 -j ACCEPT; 
+
+iptables -t nat -A POSTROUTING -s {{ipv4Cidr}} -o $VPN -j MASQUERADE; 
+ip6tables -t nat -A POSTROUTING -s {{ipv6Cidr}} -o $VPN -j MASQUERADE; 
+
+ip rule add from {{ipv4Cidr}} table 200; 
+ip route add default via 172.32.0.4 dev $VPN table 200; 
+ip route add 172.32.0.0/16 via 172.32.0.1 dev $VPN table 200; 
+ip route add {{ipv4Cidr}} dev wg0 table 200; 
+
+ip -6 rule add from {{ipv6Cidr}} table 200; 
+ip -6 route add default via fd01:beee:beee::4 dev $VPN table 200; 
+ip -6 route add fd01:beee:beee::/48 via fd01:beee:beee::1 dev $VPN table 200; 
+ip -6 route add {{ipv6Cidr}} dev wg0 table 200;
