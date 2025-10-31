@@ -170,7 +170,7 @@ async function disableIpv6(db: DBType) {
   });
 }
 
-const IPTABLES_DIR = '/iptables';
+const IPTABLES_DIR = '/hooks';
 const HOOK_FILE_MAP = {
   postUp: 'wg-post-up.txt',
   postDown: 'wg-post-down.txt',
