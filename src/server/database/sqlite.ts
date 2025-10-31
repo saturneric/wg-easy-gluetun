@@ -3,6 +3,8 @@ import { migrate as drizzleMigrate } from 'drizzle-orm/libsql/migrator';
 import { createClient } from '@libsql/client';
 import debug from 'debug';
 import { eq } from 'drizzle-orm';
+import { promises as fs } from 'fs';
+import { join } from 'path';
 
 import * as schema from './schema';
 import { ClientService } from './repositories/client/service';
@@ -31,8 +33,8 @@ export async function connect() {
     await disableIpv6(db);
   }
 
-  // Override hooks from environment variables if set
-  await overrideHooksFromEnv(dbService);
+  // Override hooks from files, do not allow empty overwrite here
+  await overrideHooksFromFiles(db, { allowEmptyOverwrite: false });
 
   return dbService;
 }
@@ -168,18 +170,76 @@ async function disableIpv6(db: DBType) {
   });
 }
 
-async function overrideHooksFromEnv(db: DBType) {
-  const envHooks = {
-    preUp: WG_ENV.WG_PRE_UP ?? '',
-    postUp: WG_ENV.WG_POST_UP ?? '',
-    preDown: WG_ENV.WG_PRE_DOWN ?? '',
-    postDown: WG_ENV.WG_POST_DOWN ?? '',
-  };
-  const hasAnyHook = Object.values(envHooks).some(h => h !== '');
+const IPTABLES_DIR = '/iptables';
+const HOOK_FILE_MAP = {
+  postUp: 'wg-post-up.txt',
+  postDown: 'wg-post-down.txt',
+} as const;
 
-  if (!hasAnyHook) return;
+function normalizeHook(s: string): string {
+  // remove BOM, normalize line endings, remove comments and extra whitespace
+  const noBom = s.replace(/^\uFEFF/, '');
 
-  DB_DEBUG('Overriding hooks from environment variables...');
+  // Normalize line endings
+  const normalized = noBom.replace(/\r\n/g, '\n');
+
+  // Remove lines starting with # (including leading whitespace)
+  const withoutComments = normalized
+    .split('\n')
+    .filter(line => !line.trim().startsWith('#') && line.trim() !== '')
+    .join(' '); // Join the removed lines with a space to avoid command concatenation
+
+  // Remove extra whitespace
+  return withoutComments.trim().replace(/\s+/g, ' ');
+}
+
+async function readIfExists(p: string): Promise<string | null> {
+  try {
+    const raw = await fs.readFile(p, 'utf8');
+    return normalizeHook(raw);
+  } catch (e: any) {
+    if (e && (e.code === 'ENOENT' || e.code === 'ENOTDIR')) return null;
+    throw e;
+  }
+}
+
+export async function overrideHooksFromFiles(
+  db: DBType,
+  opts?: { allowEmptyOverwrite?: boolean }
+) {
+  const allowEmptyOverwrite = !!opts?.allowEmptyOverwrite;
+
+  DB_DEBUG('Overriding hooks from files under /iptables...');
+
+  // pre-read files concurrently
+  const [postUpFile, postDownFile] = await Promise.all([
+    readIfExists(join(IPTABLES_DIR, HOOK_FILE_MAP.postUp)),
+    readIfExists(join(IPTABLES_DIR, HOOK_FILE_MAP.postDown)),
+  ]);
+
+  DB_DEBUG('Read hook files:', {
+    postUpFile: postUpFile === null ? 'not found' : '[found]',
+    postDownFile: postDownFile === null ? 'not found' : '[found]',
+  });
+
+  DB_DEBUG('Contents:', {
+    postUpFile:
+      postUpFile === null ? 'N/A' : postUpFile === '' ? '[empty]' : postUpFile,
+    postDownFile:
+      postDownFile === null
+        ? 'N/A'
+        : postDownFile === ''
+        ? '[empty]'
+        : postDownFile,
+  });
+
+  const hasAnyFile =
+    postUpFile !== null || postDownFile !== null;
+
+  if (!hasAnyFile) {
+    DB_DEBUG('No hook files found, nothing to override.');
+    return;
+  }
 
   await db.transaction(async (tx) => {
     const hooks = await tx.query.hooks.findFirst({
@@ -188,11 +248,31 @@ async function overrideHooksFromEnv(db: DBType) {
     if (!hooks) throw new Error('Hooks not found');
 
     const updatedHooks = {
-      preUp: envHooks.preUp || hooks.preUp,
-      postUp: envHooks.postUp || hooks.postUp,
-      preDown: envHooks.preDown || hooks.preDown,
-      postDown: envHooks.postDown || hooks.postDown,
+      preUp: hooks.preUp,       // not changed
+      preDown: hooks.preDown,   // not changed
+      postUp:
+        postUpFile === null
+          ? hooks.postUp
+          : postUpFile === '' && !allowEmptyOverwrite
+          ? hooks.postUp
+          : postUpFile, // use file content if exists
+      postDown:
+        postDownFile === null
+          ? hooks.postDown
+          : postDownFile === '' && !allowEmptyOverwrite
+          ? hooks.postDown
+          : postDownFile,
     };
+
+     // Check if anything changed
+    const unchanged =
+      updatedHooks.postUp === hooks.postUp &&
+      updatedHooks.postDown === hooks.postDown;
+
+    if (unchanged) {
+      DB_DEBUG('Hook contents identical, skip updating DB.');
+      return;
+    }
 
     await tx
       .update(schema.hooks)
@@ -201,5 +281,5 @@ async function overrideHooksFromEnv(db: DBType) {
       .execute();
   });
 
-  DB_DEBUG('Hooks successfully overridden from environment variables');
+  DB_DEBUG('Hooks successfully overridden from files.');
 }
