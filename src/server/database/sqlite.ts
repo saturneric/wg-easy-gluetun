@@ -31,6 +31,9 @@ export async function connect() {
     await disableIpv6(db);
   }
 
+  // Override hooks from environment variables if set
+  await overrideHooksFromEnv(dbService);
+
   return dbService;
 }
 
@@ -163,4 +166,40 @@ async function disableIpv6(db: DBType) {
       DB_DEBUG('IPv6 Post Down hooks already disabled, skipping...');
     }
   });
+}
+
+async function overrideHooksFromEnv(db: DBType) {
+  const envHooks = {
+    preUp: WG_ENV.WG_PRE_UP ?? '',
+    postUp: WG_ENV.WG_POST_UP ?? '',
+    preDown: WG_ENV.WG_PRE_DOWN ?? '',
+    postDown: WG_ENV.WG_POST_DOWN ?? '',
+  };
+  const hasAnyHook = Object.values(envHooks).some(h => h !== '');
+
+  if (!hasAnyHook) return;
+
+  DB_DEBUG('Overriding hooks from environment variables...');
+
+  await db.transaction(async (tx) => {
+    const hooks = await tx.query.hooks.findFirst({
+      where: eq(schema.hooks.id, 'wg0'),
+    });
+    if (!hooks) throw new Error('Hooks not found');
+
+    const updatedHooks = {
+      preUp: envHooks.preUp || hooks.preUp,
+      postUp: envHooks.postUp || hooks.postUp,
+      preDown: envHooks.preDown || hooks.preDown,
+      postDown: envHooks.postDown || hooks.postDown,
+    };
+
+    await tx
+      .update(schema.hooks)
+      .set(updatedHooks)
+      .where(eq(schema.hooks.id, 'wg0'))
+      .execute();
+  });
+
+  DB_DEBUG('Hooks successfully overridden from environment variables');
 }
