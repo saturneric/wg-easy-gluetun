@@ -63,7 +63,6 @@ This project is based on [wg-easy](https://github.com/wg-easy/wg-easy) with the 
 - **Optimized for Gluetun Integration**: Pre-configured network settings for seamless VPN chaining
 - **Simplified Configuration**: Reduced configuration steps to minimize setup errors
 - **Docker Compose Ready**: Out-of-the-box Docker Compose configuration for quick deployment
-- **Regularly Synchronized**: Code is periodically updated from the upstream wg-easy repository
 - **Contributing Back**: Usability improvements are contributed back to the wg-easy project
 
 ### Synchronization with wg-easy
@@ -266,7 +265,6 @@ docker compose logs wg-easy
 - [Gluetun Wiki](https://github.com/qdm12/gluetun-wiki)
 - [WG-Easy](https://wg-easy.github.io/wg-easy/v15.1/)
 - [Docker Compose Documentation](https://docs.docker.com/compose/)
-
 
 ## 🤝 Contributing
 
