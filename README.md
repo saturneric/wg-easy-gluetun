@@ -71,6 +71,7 @@ This project is based on [wg-easy](https://github.com/wg-easy/wg-easy) with the 
 This project maintains compatibility with wg-easy by:
 - Regularly syncing with the latest wg-easy releases
 - Testing all updates for compatibility with Gluetun integration
+- Contributing usability improvements and bug fixes back to the upstream project
 
 ## 📋 Prerequisites
 
@@ -94,12 +95,7 @@ cd wg-easy-gluetun
 cp .env.example .env
 ```
 
-Edit `.env` file with your settings:
-- `WG_HOST`: Your public IP or domain
-- `PASSWORD`: Web UI password for WireGuard Easy
-- `VPN_SERVICE_PROVIDER`: Your VPN provider (e.g., nordvpn, expressvpn)
-- `VPN_USERNAME`: Your VPN username
-- `VPN_PASSWORD`: Your VPN password
+Edit `.env` file with your settings.
 
 ### 3. Start Services
 
@@ -115,17 +111,6 @@ http://YOUR_SERVER_IP:51821
 ```
 
 ## ⚙️ Configuration
-
-### Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `WG_HOST` | Public hostname/IP for WireGuard | - |
-| `PASSWORD` | Web UI password | - |
-| `WG_PORT` | WireGuard port | 51820 |
-| `WG_DEFAULT_DNS` | DNS server for clients | 1.1.1.1 |
-| `VPN_SERVICE_PROVIDER` | Gluetun VPN provider | - |
-| `SERVER_COUNTRIES` | VPN server country | - |
 
 ### Port Forwarding
 
@@ -192,6 +177,7 @@ docker compose logs wg-easy
 
 - [WireGuard Official Documentation](https://www.wireguard.com/)
 - [Gluetun Wiki](https://github.com/qdm12/gluetun-wiki)
+- [WG-Easy](https://wg-easy.github.io/wg-easy/v15.1/)
 - [Docker Compose Documentation](https://docs.docker.com/compose/)
 
 
