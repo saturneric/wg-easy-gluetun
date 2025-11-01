@@ -52,6 +52,20 @@ services:
         ipv6_address: "fd01:beee:beee::4" # Fixed IPv6 address
     restart: unless-stopped
 
+  # AdGuard Home service as DNS server
+  # If you do not want to use Adguard Home, you can comment out or remove this service.
+  adguardhome:
+    image: adguard/adguardhome
+    network_mode: service:gluetun
+    depends_on:
+      gluetun:
+        condition: service_started
+        restart: true
+    volumes:
+      - ./data/adguardhome/work:/opt/adguardhome/work
+      - ./data/adguardhome/conf:/opt/adguardhome/conf
+    restart: unless-stopped
+
 networks:
   vpn: # separate bridge network with IPv4 and IPv6
     name: vpn
