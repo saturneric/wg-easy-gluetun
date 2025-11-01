@@ -4,6 +4,52 @@
 
 > **📖 Want to learn more?** Check out this [detailed introduction article](https://blog.bktus.com/en/archives/2918/) explaining the principles and architecture of this VPN chaining setup.
 
+- [WireGuard Easy \& Gluetun](#wireguard-easy--gluetun)
+  - [📋 Prerequisites](#-prerequisites)
+  - [🌟 Features](#-features)
+  - [🏗️ Architecture](#️-architecture)
+  - [🔄 About This Project](#-about-this-project)
+    - [Synchronization with wg-easy](#synchronization-with-wg-easy)
+  - [🚀 Quick Start](#-quick-start)
+    - [1. Clone the Repository](#1-clone-the-repository)
+    - [2. Configure Environment Variables](#2-configure-environment-variables)
+    - [3. Start Services](#3-start-services)
+    - [4. Access Web Interface](#4-access-web-interface)
+  - [⚙️ Configuration](#️-configuration)
+    - [📱 Adding Clients](#-adding-clients)
+    - [Port Forwarding](#port-forwarding)
+    - [Advanced Network Configuration](#advanced-network-configuration)
+      - [Hooks for WireGuard Easy](#hooks-for-wireguard-easy)
+      - [iptables Rules for Gluetun](#iptables-rules-for-gluetun)
+    - [DNS (Optional)](#dns-optional)
+      - [Option 1: Use VPN Provider's DNS (Basic)](#option-1-use-vpn-providers-dns-basic)
+      - [Option 2: Self-hosted DNS Server (Recommended)](#option-2-self-hosted-dns-server-recommended)
+      - [Verifying DNS Configuration](#verifying-dns-configuration)
+  - [🔧 Management](#-management)
+    - [View Logs](#view-logs)
+    - [Stop Services](#stop-services)
+    - [Restart Services](#restart-services)
+    - [Update Services](#update-services)
+    - [Complete Cleanup](#complete-cleanup)
+  - [🛠️ Troubleshooting](#️-troubleshooting)
+    - [Connection Issues](#connection-issues)
+    - [Logs](#logs)
+  - [📚 Additional Resources](#-additional-resources)
+  - [🤝 Contributing](#-contributing)
+    - [Ways to Contribute](#ways-to-contribute)
+  - [📄 License](#-license)
+  - [⚠️ Disclaimer](#️-disclaimer)
+
+
+## 📋 Prerequisites
+
+- Docker Engine 20.10 or later
+- Docker Compose V2
+- A VPN provider account (for Gluetun)
+- Root/sudo access on the host machine
+
+✅ Tested on: Raspberry Pi 5 / Kernel 6.16.0 / Docker 28.0.4 / Docker Compose v2.34.0
+
 ## 🌟 Features
 
 - **Easy WireGuard Management**: Simple web interface for managing WireGuard VPN
@@ -72,13 +118,6 @@ This project maintains compatibility with wg-easy by:
 - Testing all updates for compatibility with Gluetun integration
 - Contributing usability improvements and bug fixes back to the upstream project
 
-## 📋 Prerequisites
-
-- Docker Engine 20.10 or later
-- Docker Compose V2
-- A VPN provider account (for Gluetun)
-- Root/sudo access on the host machine
-
 ## 🚀 Quick Start
 
 ### 1. Clone the Repository
@@ -134,7 +173,7 @@ You can customize WireGuard Easy's network behavior by modifying scripts in the 
 
 Gluetun's firewall and routing behavior by modifying the `iptables/` directory.
 
-### DNS Configuration (Optional)
+### DNS (Optional)
 
 By default, your devices may use ISP DNS servers, which can expose your browsing activity. To prevent this:
 
@@ -161,8 +200,8 @@ services:
       - "53:53/udp"
       - "3000:3000/tcp"  # Web UI
     volumes:
-      - adguardhome-data:/opt/adguardhome/work
-      - adguardhome-conf:/opt/adguardhome/conf
+      - ./data/adguardhome/data:/opt/adguardhome/work
+      - ./data/adguardhome/conf:/opt/adguardhome/conf
     networks:
       vpn:
         ipv4_address: 172.31.0.2 # Fixed IPv4 address
