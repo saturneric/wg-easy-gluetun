@@ -19,7 +19,7 @@
     - [3. Start Services](#3-start-services)
     - [4. Access Web Interface](#4-access-web-interface)
   - [⚙️ Configuration](#️-configuration)
-    - [📱 Adding Clients](#-adding-clients)
+    - [Adding Clients](#adding-clients)
     - [Port Forwarding](#port-forwarding)
     - [Advanced Network Configuration](#advanced-network-configuration)
       - [Hooks for WireGuard Easy](#hooks-for-wireguard-easy)
@@ -153,7 +153,7 @@ http://YOUR_SERVER_IP:51821
 
 ## ⚙️ Configuration
 
-### 📱 Adding Clients
+### Adding Clients
 
 1. Access the web interface (Logged In)
 2. Click "New Client"
