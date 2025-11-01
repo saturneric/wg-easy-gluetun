@@ -24,7 +24,7 @@ services:
       - .env
     volumes:
       - /lib/modules:/lib/modules:ro
-      - wg-easy-data:/etc/wireguard # Persist WireGuard configuration
+      - ./data/wg-easy:/etc/wireguard # Persist WireGuard configuration
     restart: unless-stopped
 
   gluetun:
@@ -39,7 +39,7 @@ services:
       - .env
     volumes:
       - /lib/modules:/lib/modules:ro
-      - gluetun-data:/gluetun # Persist gluetun configuration
+      - ./data/gluetun:/gluetun # Persist gluetun configuration
     sysctls:
       - net.ipv4.ip_forward=1
       - net.ipv4.conf.all.src_valid_mark=1
@@ -51,10 +51,6 @@ services:
         ipv4_address: 172.31.0.4 # Fixed IPv4 address
         ipv6_address: "fd01:beee:beee::4" # Fixed IPv6 address
     restart: unless-stopped
-
-volumes:
-  gluetun-data:
-  wg-easy-data:
 
 networks:
   vpn: # separate bridge network with IPv4 and IPv6
