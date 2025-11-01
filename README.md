@@ -112,18 +112,95 @@ http://YOUR_SERVER_IP:51821
 
 ## ⚙️ Configuration
 
+### 📱 Adding Clients
+
+1. Access the web interface (Logged In)
+2. Click "New Client"
+3. Enter a name for the device
+4. Scan the QR code with WireGuard app or download the config file
+
 ### Port Forwarding
 
 Make sure to forward the following ports on your router:
 - `51820/udp` - WireGuard VPN
 - `51821/tcp` - Web UI (optional, for remote management)
 
-## 📱 Adding Clients
+### Advanced Network Configuration
 
-1. Access the web interface
-2. Click "New Client"
-3. Enter a name for the device
-4. Scan the QR code with WireGuard app or download the config file
+#### Hooks for WireGuard Easy
+
+You can customize WireGuard Easy's network behavior by modifying scripts in the `hooks/` directory. The hooks are automatically built into the wg-easy container and executed at the appropriate times.
+
+#### iptables Rules for Gluetun
+
+Gluetun's firewall and routing behavior by modifying the `iptables/` directory.
+
+### DNS Configuration (Optional)
+
+By default, your devices may use ISP DNS servers, which can expose your browsing activity. To prevent this:
+
+#### Option 1: Use VPN Provider's DNS (Basic)
+
+Configure Gluetun to use your VPN provider's DNS servers. This is usually handled automatically by Gluetun.
+
+#### Option 2: Self-hosted DNS Server (Recommended)
+
+For maximum privacy and ad-blocking capabilities, run your own DNS server:
+
+**Using AdGuard Home:**
+
+1. Add AdGuard Home to your `docker-compose.yml`:
+
+```yaml
+services:
+  adguardhome:
+    image: adguard/adguardhome
+    container_name: adguardhome
+    restart: unless-stopped
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "3000:3000/tcp"  # Web UI
+    volumes:
+      - adguardhome-data:/opt/adguardhome/work
+      - adguardhome-conf:/opt/adguardhome/conf
+    networks:
+      vpn:
+        ipv4_address: 172.31.0.2 # Fixed IPv4 address
+        ipv6_address: "fd01:beee:beee::2" # Fixed IPv6 address
+```
+
+2. Configure Gluetun to use AdGuard Home DNS:
+
+```yaml
+services:
+  gluetun:
+    environment:
+      - DOT=off
+      - DNS_ADDRESS=172.31.0.2 # AdGuard Home container IP
+```
+
+3. Configure WireGuard Easy DNS settings:
+
+```yaml
+services:
+  wg-easy:
+    environment:
+      - INIT_DNS=172.18.0.2  # AdGuard Home container IP
+```
+
+**Alternative DNS Servers:**
+- **Pi-hole**: Lightweight DNS with ad-blocking
+- **Unbound**: Recursive DNS server for maximum privacy
+- **dnscrypt-proxy**: DNS over HTTPS/TLS
+
+#### Verifying DNS Configuration
+
+After setup, test for DNS leaks:
+
+1. Connect to your WireGuard VPN
+2. Visit [DNSLeakTest.com](https://www.dnsleaktest.com/)
+3. Verify that only your VPN provider's or your DNS server's IP appears
 
 ## 🔧 Management
 
@@ -139,6 +216,12 @@ docker compose logs -f
 docker compose down
 ```
 
+### Restart Services
+
+```shell
+docker compose restart
+```
+
 ### Update Services
 
 ```shell
@@ -146,11 +229,15 @@ docker compose pull
 docker compose up -d
 ```
 
-### Restart Services
+### Complete Cleanup
+
+To completely remove all containers, images, and volumes:
 
 ```shell
-docker compose restart
+docker compose down --rmi all -v
 ```
+
+**⚠️ Warning**: This will delete all data including WireGuard configurations and client settings. Make sure to backup any important configurations before running this command.
 
 ## 🛠️ Troubleshooting
 
