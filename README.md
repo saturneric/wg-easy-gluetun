@@ -1,9 +1,22 @@
 # WireGuard Easy & Gluetun
 
-**Personal VPN Gateway with VPN Protection** - Build your own WireGuard VPN
-server that routes all traffic through a VPN provider via Gluetun. Connect
-unlimited devices securely and enjoy the benefits of both self-hosted and VPN
-services.
+Build your own self-hosted VPN gateway with a secure and privacy enhanced exit.
+
+All your devices securely connect to your private WireGuard server, where
+traffic is managed, and monitored under your control. From there, Gluetun
+forwards it through your trusted VPN provider, giving you a single encrypted
+exit IP, enhanced privacy, and location masking — all without depending on
+third-party infrastructure.
+
+- **Easy WireGuard Management**: Simple web interface for managing WireGuard VPN
+  (WG-Easy)
+- **VPN Chaining**: All traffic routed through a VPN provider using Gluetun
+- **Docker-Based**: Easy deployment with Docker Compose
+- **Enhanced Privacy**: Hide your IP address and encrypt your internet traffic
+- **Multi-Device Support**: Connect unlimited devices to your VPN network
+- **Remote Access**: Secure access to your home network or devices from anywhere
+- **DNS Filtering**: Integrated Adguard Home for ad-blocking and tracking
+  protection
 
 > **📖 Want to learn more?** Check out this [detailed introduction
 > article](https://blog.bktus.com/en/archives/2918/) explaining the principles
@@ -14,22 +27,21 @@ services.
 - [WireGuard Easy \& Gluetun](#wireguard-easy--gluetun)
   - [📑 Table of Contents](#-table-of-contents)
   - [📋 Prerequisites](#-prerequisites)
-  - [🌟 Features](#-features)
   - [🏗️ Architecture](#️-architecture)
   - [🔄 About This Project](#-about-this-project)
     - [Synchronization with wg-easy](#synchronization-with-wg-easy)
   - [🚀 Quick Start](#-quick-start)
     - [1. Clone the Repository](#1-clone-the-repository)
     - [2. Configure Environment Variables](#2-configure-environment-variables)
-    - [3. Configure Adguard Home (DNS Resolver)](#3-configure-adguard-home-dns-resolver)
+    - [3. Configure AdguardHome (DNS Resolver)](#3-configure-adguardhome-dns-resolver)
     - [4. Start Services](#4-start-services)
     - [5. Access Web Interface](#5-access-web-interface)
   - [⚙️ Configuration](#️-configuration)
     - [Adding Clients](#adding-clients)
     - [Port Forwarding](#port-forwarding)
-    - [Adguard Home Web Interface](#adguard-home-web-interface)
+    - [AdguardHome Web Interface](#adguardhome-web-interface)
     - [Advanced Network Configuration](#advanced-network-configuration)
-      - [Hooks for WireGuard Easy](#hooks-for-wireguard-easy)
+      - [Hooks for WG-Easy](#hooks-for-wg-easy)
       - [iptables Rules for Gluetun](#iptables-rules-for-gluetun)
   - [🔧 Management](#-management)
     - [View Logs](#view-logs)
@@ -43,7 +55,6 @@ services.
   - [📚 Additional Resources](#-additional-resources)
   - [🤝 Contributing](#-contributing)
     - [Ways to Contribute](#ways-to-contribute)
-  - [📄 License](#-license)
   - [⚠️ Disclaimer](#️-disclaimer)
 
 
@@ -56,15 +67,6 @@ services.
 
 ✅ Tested on: Raspberry Pi 5 / Kernel v6.16.0 / Docker v28.0.4 / Docker Compose
 v2.34.0
-
-## 🌟 Features
-
-- **Easy WireGuard Management**: Simple web interface for managing WireGuard VPN
-- **VPN Chaining**: Your devices → WireGuard Server → Gluetun → VPN Provider →
-  Internet
-- **Multi-Device Support**: Connect unlimited devices to your VPN network
-- **Remote Access**: Secure access to your home network from anywhere
-- **Docker-Based**: Easy deployment with Docker Compose
 
 ## 🏗️ Architecture
 
@@ -134,7 +136,7 @@ cp .env.example .env
 
 Edit `.env` file with your settings.
 
-### 3. Configure Adguard Home (DNS Resolver)
+### 3. Configure AdguardHome (DNS Resolver)
 
 ```shell
 mkdir -p ./data/adguardhome/conf
@@ -147,6 +149,9 @@ Edit `AdGuardHome.yaml` file with your settings
 modify the `.env` and `docker-compose.yml` file to remove the relevant lines.
 
 ### 4. Start Services
+
+Check docker compose file for any additional configuration you may need to do,
+then start the services:
 
 ```shell
 sudo docker compose up -d
@@ -164,7 +169,7 @@ http://YOUR_SERVER_IP:51821
 ### Adding Clients
 
 1. Access the web interface (Logged In)
-2. Click "New Client"
+2. Click "New"
 3. Enter a name for the device
 4. Scan the QR code with WireGuard app or download the config file
 
@@ -174,9 +179,9 @@ Make sure to forward the following ports on your router:
 - `51820/udp` - WireGuard VPN
 - `51821/tcp` - Web UI (optional, for remote management)
 
-### Adguard Home Web Interface
+### AdguardHome Web Interface
 
-Access Adguard Home web interface (client must be connected with wireguard
+Access AdguardHome web interface (client must be connected with wireguard
 tunnel) at:
 ```
 http://172.31.0.4
@@ -184,11 +189,14 @@ http://172.31.0.4
 
 ### Advanced Network Configuration
 
-#### Hooks for WireGuard Easy
+#### Hooks for WG-Easy
 
-You can customize WireGuard Easy's network behavior by modifying scripts in the
+You can customize WG-Easy's network behavior by modifying scripts in the
 `hooks/` directory. The hooks are automatically built into the wg-easy container
 and executed at the appropriate times.
+
+Don't forget to set corresponding commands in `wg-post-down.txt` to clean up any
+changes made in `wg-post-up.txt`.
 
 #### iptables Rules for Gluetun
 
@@ -223,10 +231,11 @@ docker compose up -d
 
 ### Complete Cleanup
 
-To completely remove all containers, images, and volumes:
+To completely remove all containers, images, volumes and data, run:
 
 ```shell
 docker compose down --rmi all -v
+rm -rf ./data
 ```
 
 **⚠️ Warning**: This will delete all data including WireGuard configurations and
@@ -271,11 +280,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 - **Suggest Features**: Have ideas for improvements?
 - **Submit Pull Requests**: Code contributions are appreciated
 - **Upstream Contributions**: Usability improvements may be contributed to
-  wg-easy
-
-## 📄 License
-
-This project is licensed under the MIT License.
+  wg-easy project.
 
 ## ⚠️ Disclaimer
 
