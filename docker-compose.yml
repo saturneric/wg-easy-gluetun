@@ -1,41 +1,6 @@
 version: "3"
 
 services:
-  gluetun:
-    build:
-      dockerfile: ./Dockerfile.gluetun
-    cap_add:
-      - NET_ADMIN
-      - SYS_MODULE
-    devices:
-      - /dev/net/tun:/dev/net/tun
-    environment:
-      - VPN_SERVICE_PROVIDER=${VPN_SERVICE_PROVIDER? "Please set the VPN_SERVICE_PROVIDER environment variable"}
-      - VPN_TYPE=wireguard
-      - WIREGUARD_ENDPOINT_IP=${WIREGUARD_ENDPOINT_IP}
-      - WIREGUARD_ENDPOINT_PORT=${WIREGUARD_ENDPOINT_PORT}
-      - WIREGUARD_PUBLIC_KEY=${WIREGUARD_PUBLIC_KEY}
-      - WIREGUARD_PRIVATE_KEY=${WIREGUARD_PRIVATE_KEY? "Please set the WIREGUARD_PRIVATE_KEY environment variable"}
-      - WIREGUARD_PRESHARED_KEY=${WIREGUARD_PRESHARED_KEY? "Please set the WIREGUARD_PRESHARED_KEY environment variable"}
-      - WIREGUARD_ADDRESSES=${WIREGUARD_ADDRESSES? "Please set the WIREGUARD_ADDRESSES environment variable"}
-      - SERVER_REGIONS=${SERVER_REGIONS}
-      - SERVER_COUNTRIES=${SERVER_COUNTRIES}
-      - FIREWALL_OUTBOUND_SUBNETS=${FIREWALL_OUTBOUND_SUBNETS? "Please set the FIREWALL_OUTBOUND_SUBNETS environment variable"}
-    volumes:
-      - /lib/modules:/lib/modules:ro
-      - gluetun-data:/gluetun
-    sysctls:
-      - net.ipv4.ip_forward=1
-      - net.ipv4.conf.all.src_valid_mark=1
-      - net.ipv6.conf.all.disable_ipv6=0
-      - net.ipv6.conf.all.forwarding=1
-      - net.ipv6.conf.default.forwarding=1
-    networks:
-      vpn:
-        ipv4_address: 172.32.0.4
-        ipv6_address: "fd01:beee:beee::4"
-    restart: unless-stopped
-
   wg-easy:
     build:
       dockerfile: ./Dockerfile
@@ -44,8 +9,8 @@ services:
       - "51821:51821/tcp"
     networks:
       vpn:
-        ipv4_address: 172.32.0.8
-        ipv6_address: "fd01:beee:beee::8"
+        ipv4_address: 172.31.0.8 # Fixed IPv4 address
+        ipv6_address: "fd01:beee:beee::8" # Fixed IPv6 address
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
@@ -55,13 +20,36 @@ services:
       - net.ipv6.conf.all.disable_ipv6=0
       - net.ipv6.conf.all.forwarding=1
       - net.ipv6.conf.default.forwarding=1
-    environment:
-      - INIT_PORT=${INIT_PORT}
-      - INIT_IPV4_CIDR=${INIT_IPV4_CIDR}
-      - INIT_IPV6_CIDR=${INIT_IPV6_CIDR}
+    env_file:
+      - .env
     volumes:
       - /lib/modules:/lib/modules:ro
-      - wg-easy-data:/etc/wireguard
+      - wg-easy-data:/etc/wireguard # Persist WireGuard configuration
+    restart: unless-stopped
+
+  gluetun:
+    build:
+      dockerfile: ./Dockerfile.gluetun
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    env_file:
+      - .env
+    volumes:
+      - /lib/modules:/lib/modules:ro
+      - gluetun-data:/gluetun # Persist gluetun configuration
+    sysctls:
+      - net.ipv4.ip_forward=1
+      - net.ipv4.conf.all.src_valid_mark=1
+      - net.ipv6.conf.all.disable_ipv6=0
+      - net.ipv6.conf.all.forwarding=1
+      - net.ipv6.conf.default.forwarding=1
+    networks:
+      vpn:
+        ipv4_address: 172.31.0.4 # Fixed IPv4 address
+        ipv6_address: "fd01:beee:beee::4" # Fixed IPv6 address
     restart: unless-stopped
 
 volumes:
@@ -69,13 +57,13 @@ volumes:
   wg-easy-data:
 
 networks:
-  vpn:
+  vpn: # separate bridge network with IPv4 and IPv6
     name: vpn
     driver: bridge
     enable_ipv6: true
     ipam:
       config:
-        - subnet: 172.32.0.0/16
-          gateway: 172.32.0.1
-        - subnet: fd01:beee:beee::/48
-          gateway: fd01:beee:beee::1
+        - subnet: 172.31.0.0/16 # IPv4 subnet
+          gateway: 172.31.0.1 # IPv4 gateway
+        - subnet: fd01:beee:beee::/48 # IPv6 subnet
+          gateway: fd01:beee:beee::1 # IPv6 gateway
