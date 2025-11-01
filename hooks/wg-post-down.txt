@@ -7,10 +7,10 @@ iptables -D INPUT -p udp -m udp --dport {{port}} -j ACCEPT;
 ip6tables -D INPUT -p udp -m udp --dport {{port}} -j ACCEPT; 
 
 # Allow only DNS queries to specific DNS server
-# iptables -D OUTPUT -o $VPN -d 172.31.0.2 -p udp --dport 53 -j ACCEPT; 
-# iptables -D OUTPUT -o $VPN -d 172.31.0.2 -p tcp --dport 53 -j ACCEPT; 
-# ip6tables -D OUTPUT -o $VPN -d fd01:beee:beee::2 -p udp --dport 53 -j ACCEPT; 
-# ip6tables -D OUTPUT -o $VPN -d fd01:beee:beee::2 -p tcp --dport 53 -j ACCEPT; 
+# iptables -D OUTPUT -o $VPN -d 172.31.0.4 -p udp --dport 53 -j ACCEPT; 
+# iptables -D OUTPUT -o $VPN -d 172.31.0.4 -p tcp --dport 53 -j ACCEPT; 
+# ip6tables -D OUTPUT -o $VPN -d fd01:beee:beee::4 -p udp --dport 53 -j ACCEPT; 
+# ip6tables -D OUTPUT -o $VPN -d fd01:beee:beee::4 -p tcp --dport 53 -j ACCEPT; 
 # 
 # Disable blocking of other DNS queries
 # iptables -D OUTPUT -p tcp --dport 53 -j REJECT; 
