@@ -1,3 +1,4 @@
+# Get the VPN bridge network interface name
 VPN=$(ifconfig | grep -B1 172.31.0.8 | grep -o "^\w*"); 
 
 iptables -P FORWARD DROP; 
@@ -6,16 +7,18 @@ ip6tables -P FORWARD DROP;
 iptables -A INPUT -p udp -m udp --dport {{port}} -j ACCEPT; 
 ip6tables -A INPUT -p udp -m udp --dport {{port}} -j ACCEPT; 
 
-iptables -A OUTPUT -o $VPN -d 172.31.0.4 -p udp --dport 53 -j ACCEPT; 
-iptables -A OUTPUT -o $VPN -d 172.31.0.4 -p tcp --dport 53 -j ACCEPT; 
-ip6tables -A OUTPUT -o $VPN -d fd01:beee:beee::4 -p udp --dport 53 -j ACCEPT; 
-ip6tables -A OUTPUT -o $VPN -d fd01:beee:beee::4 -p tcp --dport 53 -j ACCEPT; 
-
-iptables -A OUTPUT -p tcp --dport 53 -j REJECT; 
-iptables -A OUTPUT -p udp --dport 53 -j REJECT; 
-
-ip6tables -A OUTPUT -p tcp --dport 53 -j REJECT; 
-ip6tables -A OUTPUT -p udp --dport 53 -j REJECT; 
+# Allow only DNS queries to specific DNS server
+# iptables -A OUTPUT -o $VPN -d 172.31.0.2 -p udp --dport 53 -j ACCEPT; 
+# iptables -A OUTPUT -o $VPN -d 172.31.0.2 -p tcp --dport 53 -j ACCEPT; 
+# ip6tables -A OUTPUT -o $VPN -d fd01:beee:beee::2 -p udp --dport 53 -j ACCEPT; 
+# ip6tables -A OUTPUT -o $VPN -d fd01:beee:beee::2 -p tcp --dport 53 -j ACCEPT; 
+#
+# Disable blocking of other DNS queries
+# iptables -A OUTPUT -p tcp --dport 53 -j REJECT; 
+# iptables -A OUTPUT -p udp --dport 53 -j REJECT; 
+#
+# ip6tables -A OUTPUT -p tcp --dport 53 -j REJECT; 
+# ip6tables -A OUTPUT -p udp --dport 53 -j REJECT; 
 
 iptables -A FORWARD -i wg0 -j ACCEPT; 
 iptables -A FORWARD -o wg0 -m state --state RELATED,ESTABLISHED -j ACCEPT; 

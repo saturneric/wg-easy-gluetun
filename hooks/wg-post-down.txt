@@ -6,16 +6,18 @@ ip6tables -P FORWARD DROP;
 iptables -D INPUT -p udp -m udp --dport {{port}} -j ACCEPT; 
 ip6tables -D INPUT -p udp -m udp --dport {{port}} -j ACCEPT; 
 
-iptables -D OUTPUT -o $VPN -d 172.31.0.4 -p udp --dport 53 -j ACCEPT; 
-iptables -D OUTPUT -o $VPN -d 172.31.0.4 -p tcp --dport 53 -j ACCEPT; 
-ip6tables -D OUTPUT -o $VPN -d fd01:beee:beee::4 -p udp --dport 53 -j ACCEPT; 
-ip6tables -D OUTPUT -o $VPN -d fd01:beee:beee::4 -p tcp --dport 53 -j ACCEPT; 
-
-iptables -D OUTPUT -p tcp --dport 53 -j REJECT; 
-iptables -D OUTPUT -p udp --dport 53 -j REJECT; 
-
-ip6tables -D OUTPUT -p tcp --dport 53 -j REJECT; 
-ip6tables -D OUTPUT -p udp --dport 53 -j REJECT; 
+# Allow only DNS queries to specific DNS server
+# iptables -D OUTPUT -o $VPN -d 172.31.0.2 -p udp --dport 53 -j ACCEPT; 
+# iptables -D OUTPUT -o $VPN -d 172.31.0.2 -p tcp --dport 53 -j ACCEPT; 
+# ip6tables -D OUTPUT -o $VPN -d fd01:beee:beee::2 -p udp --dport 53 -j ACCEPT; 
+# ip6tables -D OUTPUT -o $VPN -d fd01:beee:beee::2 -p tcp --dport 53 -j ACCEPT; 
+# 
+# Disable blocking of other DNS queries
+# iptables -D OUTPUT -p tcp --dport 53 -j REJECT; 
+# iptables -D OUTPUT -p udp --dport 53 -j REJECT; 
+#
+# ip6tables -D OUTPUT -p tcp --dport 53 -j REJECT; 
+# ip6tables -D OUTPUT -p udp --dport 53 -j REJECT; 
 
 iptables -D FORWARD -i wg0 -j ACCEPT; 
 iptables -D FORWARD -o wg0 -m state --state RELATED,ESTABLISHED -j ACCEPT; 
