@@ -1,5 +1,7 @@
 # Get the VPN bridge network interface name
-VPN=$(ifconfig | grep -B1 172.31.0.8 | grep -o "^\w*"); 
+VPN=$(ifconfig | grep -B1 172.31.0.8 | grep -o "^\w*");
+# Optional: Get another LAN network interface name (using 172.20.x.x as example)
+# NET=$(ifconfig | grep -B1 'addr:172.20.\d.\d' | grep -o "^\w*");
 
 iptables -P FORWARD DROP; 
 ip6tables -P FORWARD DROP; 
@@ -31,12 +33,19 @@ ip6tables -A FORWARD -s {{ipv6Cidr}} -d {{ipv6Cidr}} -i wg0 -o wg0 -j ACCEPT;
 iptables -t nat -A POSTROUTING -s {{ipv4Cidr}} -o $VPN -j MASQUERADE; 
 ip6tables -t nat -A POSTROUTING -s {{ipv6Cidr}} -o $VPN -j MASQUERADE; 
 
+# Optional: Masquerade for another LAN before going out the VPN
+# iptables -t nat -A POSTROUTING -s {{ipv4Cidr}} -o $NET -j MASQUERADE;
+
 ip rule add from {{ipv4Cidr}} table 200; 
 ip route add default via 172.31.0.4 dev $VPN table 200; 
-ip route add 172.31.0.0/16 via 172.31.0.1 dev $VPN table 200; 
+ip route add 172.31.0.0/16 via 172.31.0.1 dev $VPN table 200;
+# Optional: route to another LAN before going out the VPN
+# ip route add 172.20.0.0/16 via 172.20.0.1 dev $NET table 200;
 ip route add {{ipv4Cidr}} dev wg0 table 200; 
 
 ip -6 rule add from {{ipv6Cidr}} table 200; 
 ip -6 route add default via fd01:beee:beee::4 dev $VPN table 200; 
 ip -6 route add fd01:beee:beee::/48 via fd01:beee:beee::1 dev $VPN table 200; 
+# Optional: route to another LAN before going out the VPN
+# ip -6 route add fd02:beee:beee::/48 via fd02:beee:beee::1 dev $NET table 200;
 ip -6 route add {{ipv6Cidr}} dev wg0 table 200;
