@@ -4,7 +4,10 @@
 
 > **📖 Want to learn more?** Check out this [detailed introduction article](https://blog.bktus.com/en/archives/2918/) explaining the principles and architecture of this VPN chaining setup.
 
+## 📑 Table of Contents
+
 - [WireGuard Easy \& Gluetun](#wireguard-easy--gluetun)
+  - [📑 Table of Contents](#-table-of-contents)
   - [📋 Prerequisites](#-prerequisites)
   - [🌟 Features](#-features)
   - [🏗️ Architecture](#️-architecture)
