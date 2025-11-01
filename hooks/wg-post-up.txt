@@ -35,6 +35,7 @@ ip6tables -t nat -A POSTROUTING -s {{ipv6Cidr}} -o $VPN -j MASQUERADE;
 
 # Optional: Masquerade for another LAN before going out the VPN
 # iptables -t nat -A POSTROUTING -s {{ipv4Cidr}} -o $NET -j MASQUERADE;
+# ip6tables -t nat -A POSTROUTING -s {{ipv6Cidr}} -o $NET -j MASQUERADE;
 
 ip rule add from {{ipv4Cidr}} table 200; 
 ip route add default via 172.31.0.4 dev $VPN table 200; 
