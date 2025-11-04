@@ -3,6 +3,7 @@ version: "3"
 services:
   wg-easy:
     build:
+      context: .
       dockerfile: ./Dockerfile
     ports:
       - "51820:51820/udp"
@@ -29,6 +30,7 @@ services:
 
   gluetun:
     build:
+      context: .
       dockerfile: ./Dockerfile.gluetun
     cap_add:
       - NET_ADMIN
