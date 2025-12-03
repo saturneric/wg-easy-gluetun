@@ -1,3 +1,0 @@
-FROM qmcgaw/gluetun
-
-COPY --chown=root:root --chmod=0644 iptables/post-rules.txt /iptables/post-rules.txt

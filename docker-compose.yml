@@ -29,9 +29,7 @@ services:
     restart: unless-stopped
 
   gluetun:
-    build:
-      context: .
-      dockerfile: ./Dockerfile.gluetun
+    image: qmcgaw/gluetun:latest
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
@@ -42,6 +40,7 @@ services:
     volumes:
       - /lib/modules:/lib/modules:ro
       - ./data/gluetun:/gluetun # Persist gluetun configuration
+      - ./iptables/post-rules.txt:/iptables/post-rules.txt:ro
     sysctls:
       - net.ipv4.ip_forward=1
       - net.ipv4.conf.all.src_valid_mark=1
