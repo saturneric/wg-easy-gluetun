@@ -57,14 +57,13 @@ services:
   # If you do not want to use Adguard Home, you can comment out or remove this service.
   adguardhome:
     image: adguard/adguardhome
-    network_mode: service:gluetun
-    depends_on:
-      gluetun:
-        condition: service_started
-        restart: true
     volumes:
       - ./data/adguardhome/work:/opt/adguardhome/work
       - ./conf/adguardhome:/opt/adguardhome/conf
+    networks:
+      vpn:
+        ipv4_address: 172.31.0.16 # Fixed IPv4 address
+        ipv6_address: "fd01:beee:beee::10" # Fixed IPv6 address
     restart: unless-stopped
 
 networks:
