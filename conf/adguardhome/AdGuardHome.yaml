@@ -2,23 +2,19 @@ http:
   pprof:
     port: 6060
     enabled: false
-  # Web listening address and port (change if needed)
-  address: 172.31.0.4:80
+  address: 172.31.0.16:80
   session_ttl: 720h
 users:
   - name: admin
-    # Please change the password hash to your own hashed password.
-    # https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration#password-reset
-    password: $2a$10$YwOm0m9XUnUs19xNKShGJez5vyUlj6BL/k15siRTbETStbpdrowOG # oYRUfUTjyFZox9Btl6
+    password: $2a$10$YwOm0m9XUnUs19xNKShGJez5vyUlj6BL/k15siRTbETStbpdrowOG
 auth_attempts: 5
 block_auth_min: 15
 http_proxy: ""
 language: ""
 theme: auto
 dns:
-  # DNS server listen address and port (change if needed)
   bind_hosts:
-    - 172.31.0.4
+    - 172.31.0.16
   port: 53
   anonymize_client_ip: false
   ratelimit: 20
@@ -26,8 +22,6 @@ dns:
   ratelimit_subnet_len_ipv6: 56
   ratelimit_whitelist: []
   refuse_any: true
-  # Upstream DNS servers (change if needed)
-  # You can also use web ui to configure upstream DNS servers.
   upstream_dns:
     - https://dns10.quad9.net/dns-query
     - tls://dns10.quad9.net
@@ -54,6 +48,8 @@ dns:
   cache_ttl_min: 0
   cache_ttl_max: 0
   cache_optimistic: false
+  cache_optimistic_answer_ttl: 30s
+  cache_optimistic_max_age: 12h
   bogus_nxdomain: []
   aaaa_disabled: false
   enable_dnssec: false
@@ -99,12 +95,14 @@ querylog:
   interval: 2160h
   size_memory: 1000
   enabled: true
+  ignored_enabled: false
   file_enabled: true
 statistics:
   dir_path: ""
   ignored: []
   interval: 24h
   enabled: true
+  ignored_enabled: false
 filters:
   - enabled: true
     url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt
@@ -188,4 +186,4 @@ os:
   group: ""
   user: ""
   rlimit_nofile: 0
-schema_version: 31
+schema_version: 33
