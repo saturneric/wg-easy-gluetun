@@ -22,6 +22,16 @@ fi
 
 echo "Policy route interface: $VPN"
 
+WG_EASY_IPV4="172.31.0.8"
+WG_EASY_IPV6="fd01:beee:beee::8"
+
+WG_CLIENT_IPV4_CIDR="10.8.0.0/24"
+WG_CLIENT_IPV6_CIDR="fdcc:beef:babe:cafe::/64"
+
+# Route client CIDRs via the VPN interface
+ip route replace "$WG_CLIENT_IPV4_CIDR" via "$WG_EASY_IPV4" dev "$VPN" onlink;
+ip -6 route replace "$WG_CLIENT_IPV6_CIDR" via "$WG_EASY_IPV6" dev "$VPN" onlink;
+
 # IPv4: marked packets use table 444
 ip rule del fwmark "$MARK" table "$TABLE" 2>/dev/null || true
 ip rule add fwmark "$MARK" table "$TABLE" priority "$PRIORITY"
