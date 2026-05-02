@@ -31,11 +31,11 @@ iptables -t nat -D POSTROUTING -s {{ipv4Cidr}} -o $VPN -j MASQUERADE;
 ip6tables -t nat -D POSTROUTING -s {{ipv6Cidr}} -o $VPN -j MASQUERADE; 
 
 ip rule del from {{ipv4Cidr}} table 200; 
-ip route del default via 172.31.0.4 dev $VPN table 200; 
+ip route del default via 172.31.0.32 dev $VPN table 200; 
 ip route del 172.31.0.0/16 via 172.31.0.1 dev $VPN table 200; 
 ip route del {{ipv4Cidr}} dev wg0 table 200; 
 
 ip -6 rule del from {{ipv6Cidr}} table 200; 
-ip -6 route del default via fd01:beee:beee::4 dev $VPN table 200; 
+ip -6 route del default via fd01:beee:beee::20 dev $VPN table 200; 
 ip -6 route del fd01:beee:beee::/48 via fd01:beee:beee::1 dev $VPN table 200; 
 ip -6 route del {{ipv6Cidr}} dev wg0 table 200;
