@@ -38,11 +38,11 @@ ip -6 route add default via "$VPN_GW6" dev "$VPN" table "$TABLE" onlink
 
 echo "=== ip rules ==="
 ip rule show
-[ "$ENABLE_IPV6" = "1" ] && ip -6 rule show || true
+ip -6 rule show || true
 
 echo "=== table $TABLE ==="
 ip route show table "$TABLE"
-[ "$ENABLE_IPV6" = "1" ] && ip -6 route show table "$TABLE" || true
+ip -6 route show table "$TABLE" || true
 
 echo "=== route test ==="
 ip route get 1.1.1.1 || true
