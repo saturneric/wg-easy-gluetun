@@ -182,7 +182,7 @@ Access AdguardHome web interface (client must be connected with wireguard
 tunnel) at:
 
 ```
-http://172.31.0.4
+http://172.31.0.16
 ```
 
 ### Advanced Network Configuration
