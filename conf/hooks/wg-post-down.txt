@@ -1,5 +1,5 @@
 # Get the VPN bridge network interface name
-VPN=$(ip -o -4 addr show | awk -v ip="172.31.0.8" '$0 ~ ip {print $2; exit}')
+VPN=$(ip -o -4 addr show | awk '$4 ~ /^172\.31\.0\.8\// {print $2; exit}'); test -n "$VPN";
 
 iptables -P FORWARD DROP; 
 ip6tables -P FORWARD DROP; 
