@@ -14,10 +14,9 @@
   ],
   "outbounds": [
     {
-      "type": "http",
+      "type": "direct",
       "tag": "gluetun",
-      "server": "172.31.0.4",
-      "server_port": 8888
+      "routing_mark": 990
     },
     {
       "type": "direct",
@@ -35,13 +34,7 @@
         "outbound": "direct"
       },
       {
-        "rule_set": [
-          "geosite-openai",
-          "geosite-netflix",
-          "geosite-paypal",
-          "geosite-disney",
-          "geoip-cn"
-        ],
+        "rule_set": ["geosite-openai", "geosite-paypal", "geoip-cn"],
         "outbound": "direct"
       },
       {

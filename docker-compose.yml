@@ -65,7 +65,9 @@ services:
     restart: unless-stopped
 
   sing-box:
-    image: ghcr.io/sagernet/sing-box:latest
+    build:
+      context: .
+      dockerfile: ./Dockerfile.sing-box
     restart: unless-stopped
     volumes:
       - ./conf/sing-box:/etc/sing-box
@@ -75,18 +77,16 @@ services:
       - /dev/net/tun:/dev/net/tun
     ports:
       - "9090:9090"
-    command: -D /var/lib/sing-box -C /etc/sing-box/ run
+    sysctls:
+      - net.ipv4.ip_forward=1
+      - net.ipv4.conf.all.src_valid_mark=1
+      - net.ipv6.conf.all.disable_ipv6=0
+      - net.ipv6.conf.all.forwarding=1
+      - net.ipv6.conf.default.forwarding=1
     networks:
       vpn:
         ipv4_address: 172.31.0.32 # Fixed IPv4 address
         ipv6_address: "fd01:beee:beee::20" # Fixed IPv6 address
-
-  metacubexd:
-    image: ghcr.io/metacubex/metacubexd:latest
-    container_name: metacubexd
-    restart: unless-stopped
-    ports:
-      - "9091:80"
 
 networks:
   vpn: # separate bridge network with IPv4 and IPv6

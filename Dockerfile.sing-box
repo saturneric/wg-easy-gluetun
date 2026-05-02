@@ -1,0 +1,11 @@
+FROM ghcr.io/sagernet/sing-box:latest
+
+RUN apk add --no-cache \
+    bash \
+    iproute2 \
+    ca-certificates \
+ && update-ca-certificates
+
+COPY --chmod=755 scripts/entrypoint.sing-box.sh /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
