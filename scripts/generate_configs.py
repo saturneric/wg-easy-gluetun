@@ -86,10 +86,11 @@ def build_context(cfg: dict) -> dict:
 
     return {
         # Top-level config sections (accessible as e.g. [[ vpn.wireguard.private_key ]])
-        "network":  cfg["network"],
-        "vpn":      vpn,
-        "wg_easy":  wg,
-        "singbox":  sb,
+        "network":     cfg["network"],
+        "vpn":         vpn,
+        "wg_easy":     wg,
+        "singbox":     sb,
+        "adguardhome": cfg["adguardhome"],
         # Shorthand aliases for frequently used IPs
         "svc":            svc,
         "wg_easy_ip_esc": svc["wg_easy"]["ipv4"].replace(".", r"\."),
@@ -134,8 +135,9 @@ TARGETS: list[tuple[str, str, dict | None]] = [
     ("hooks/wg-hook.txt.j2",        "conf/hooks/wg-post-up.txt",   {"action": "add"}),
     ("hooks/wg-hook.txt.j2",        "conf/hooks/wg-post-down.txt", {"action": "del"}),
     ("iptables/post-rules.txt.j2",  "conf/iptables/post-rules.txt", None),
-    ("sing-box/config.json.j2",     "conf/sing-box/config.json",   None),
-    ("sing-box/entrypoint.sh.j2",   "conf/sing-box/entrypoint.sh", None),
+    ("sing-box/config.json.j2",                   "conf/sing-box/config.json",          None),
+    ("sing-box/entrypoint.sh.j2",                 "conf/sing-box/entrypoint.sh",        None),
+    ("adguardhome/AdGuardHome.yaml.j2",           "conf/adguardhome/AdGuardHome.yaml",  None),
 ]
 
 
@@ -176,10 +178,6 @@ def main() -> None:
         print()
         print("Done.  Restart the stack to apply changes:")
         print("  docker compose up -d")
-        print()
-        adguard_ip = cfg["network"]["services"]["adguardhome"]["ipv4"]
-        print("Note: conf/adguardhome/AdGuardHome.yaml is not generated.")
-        print(f"      Its bind address must match network.services.adguardhome.ipv4 ({adguard_ip}).")
 
 
 if __name__ == "__main__":
