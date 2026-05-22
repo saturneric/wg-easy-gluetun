@@ -69,6 +69,7 @@ services:
       context: .
       dockerfile: ./Dockerfile.sing-box
     restart: unless-stopped
+    entrypoint: ["/bin/bash", "/etc/sing-box/entrypoint.sh"]
     volumes:
       - ./conf/sing-box:/etc/sing-box
     cap_add:

@@ -2,8 +2,8 @@
 *.swp
 node_modules
 .env
-config.yaml
 data
+conf/
 
 # python
 __pycache__/

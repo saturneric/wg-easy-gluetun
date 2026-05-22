@@ -1,0 +1,141 @@
+# ============================================================
+# wg-easy-gluetun centralized configuration
+#
+# Edit this file, then run:
+#   python scripts/generate_configs.py
+#
+# Generated files (do not edit manually):
+#   .env
+#   conf/hooks/wg-post-up.txt
+#   conf/hooks/wg-post-down.txt
+#   conf/iptables/post-rules.txt
+#   conf/sing-box/config.json
+#   conf/sing-box/entrypoint.sh
+#
+# NOTE: network.services.* IPs must match docker-compose.yml.
+#       If you change them here, also update docker-compose.yml
+#       and restart the stack.
+# ============================================================
+
+# --- Network topology ----------------------------------------
+# Container IPs must match docker-compose.yml static assignments.
+network:
+  ipv4_subnet: "172.31.0.0/16"
+  ipv4_gateway: "172.31.0.1"
+  ipv6_subnet: "fd01:beee:beee::/48"
+  ipv6_gateway: "fd01:beee:beee::1"
+
+  services:
+    wg_easy:
+      ipv4: "172.31.0.8"
+      ipv6: "fd01:beee:beee::8"
+    gluetun:
+      ipv4: "172.31.0.4"
+      ipv6: "fd01:beee:beee::4"
+    adguardhome:
+      ipv4: "172.31.0.16"
+      ipv6: "fd01:beee:beee::10"
+      dns_port: 53
+      http_port: 80
+    singbox:
+      ipv4: "172.31.0.32"
+      ipv6: "fd01:beee:beee::20"
+      # TUN interface addresses inside the sing-box container
+      tun_ipv4: "172.30.0.1/30"
+      tun_ipv6: "fd02:beee:beee::1/126"
+
+# --- VPN / Gluetun settings ----------------------------------
+vpn:
+  service_provider: "airvpn"
+  type: "wireguard"
+  wireguard:
+    endpoint_ip: ""
+    endpoint_port: ""
+    public_key: ""
+    private_key: ""
+    preshared_key: ""
+    # IP address assigned to gluetun by the VPN provider (/32 or /128)
+    addresses: ""
+  server_regions: "Europe"
+  server_countries: "Germany"
+  # Local subnets that gluetun allows outbound without VPN
+  firewall_outbound_subnets:
+    - "192.168.0.0/16"
+    - "10.0.0.0/8"
+    - "172.16.0.0/12"
+
+# --- WG-Easy settings ----------------------------------------
+wg_easy:
+  host: "0.0.0.0"
+  insecure: true
+  disable_ipv6: false
+  wireguard_port: 51820
+  http_proxy:
+    enabled: true
+    stealth: true
+  init:
+    enabled: true
+    username: "admin"
+    password: ""                          # WG-Easy web UI password
+    public_host: "127.0.0.1"             # Server's public IP or domain (for client configs)
+    ipv4_cidr: "10.8.0.0/24"             # WireGuard client IP pool (IPv4)
+    ipv6_cidr: "fdcc:beef:babe:cafe::/64" # WireGuard client IP pool (IPv6)
+
+  # Subnets that bypass sing-box and route directly to gluetun (still goes through
+  # the VPN tunnel unless gluetun's FIREWALL_OUTBOUND_SUBNETS also allows them out).
+  # More-specific routes in table 200 take precedence over the default via sing-box.
+  # Example: local LAN access — gluetun allows 192.168.0.0/16 outbound without VPN.
+  direct_subnets: []
+  direct_subnets_ipv6: []
+
+# --- AdGuard Home settings -----------------------------------
+adguardhome:
+  admin:
+    username: "admin"
+    password_hash: "$2a$10$YwOm0m9XUnUs19xNKShGJez5vyUlj6BL/k15siRTbETStbpdrowOG"
+  upstream_dns:
+    - "https://dns10.quad9.net/dns-query"
+    - "tls://dns10.quad9.net"
+  bootstrap_dns:
+    - "9.9.9.10"
+    - "149.112.112.10"
+    - "2620:fe::10"
+    - "2620:fe::fe:10"
+  querylog_interval: "2160h"
+  statistics_interval: "24h"
+  filters:
+    - enabled: true
+      url: "https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt"
+      name: "AdGuard DNS filter"
+      id: 1
+    - enabled: false
+      url: "https://adguardteam.github.io/HostlistsRegistry/assets/filter_2.txt"
+      name: "AdAway Default Blocklist"
+      id: 2
+
+# --- sing-box routing settings -------------------------------
+singbox:
+  clash_api_port: 9090
+  clash_api_secret: ""                    # Clash API authentication secret
+  routing_mark: 990                       # fwmark for VPN-bound packets
+  routing_table: 444                      # Policy routing table ID
+  routing_priority: 8000                  # ip rule priority
+
+  # Rule sets whose traffic bypasses the VPN and goes direct.
+  # All other traffic is routed through gluetun.
+  bypass_rule_sets:
+    - tag: "geoip-cn"
+      url: "https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/geoip-cn.srs"
+    - tag: "geosite-openai"
+      url: "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-openai.srs"
+    - tag: "geosite-paypal"
+      url: "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-paypal.srs"
+
+  # Additional rule sets downloaded but not used in routing rules (for future use).
+  extra_rule_sets:
+    - tag: "geosite-google"
+      url: "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-google.srs"
+    - tag: "geosite-amazon"
+      url: "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-amazon.srs"
+    - tag: "geosite-apple"
+      url: "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-apple.srs"
