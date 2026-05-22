@@ -15,7 +15,14 @@ masking.
 - **Single Config File**: All settings live in `config.yaml`; edit once, then run `./up.sh`
 - **Docker-Based**: Easy deployment, no other tools required on the host
 
-> **Want to learn more?** Check out this [detailed introduction article](https://blog.bktus.com/en/archives/qqyy2t/) explaining the principles and architecture of this VPN chaining setup.
+> **Want to learn more?** Check out this [detailed introduction
+> article](https://blog.bktus.com/en/archives/qqyy2t/) explaining the principles
+> and technical details behind this project.
+
+> **New Architecture**: The latest version has been redesigned to use sing-box
+> as a TUN router, allowing for more flexible and powerful routing rules. Check
+> out [the corresponding article](https://blog.bktus.com/en/archives/uqrk3i/)
+> for a deep dive into it.
 
 ## Table of Contents
 
