@@ -43,7 +43,7 @@ ip6tables -t nat [[ ipt ]] POSTROUTING -s {{ipv6Cidr}} -d [[ singbox_ipv6 ]]/128
 ip6tables -t nat [[ ipt ]] POSTROUTING -s {{ipv6Cidr}} -d [[ network.ipv6_subnet ]] -o $VPN -j MASQUERADE;
 [% if direct_subnets or direct_subnets_ipv6 %]
 
-# NAT for direct subnets (bypass sing-box → gluetun)
+# NAT for direct subnets (bypass sing-box and gluetun → Docker gateway)
 [% for subnet in direct_subnets %]
 iptables -t nat [[ ipt ]] POSTROUTING -s {{ipv4Cidr}} -d [[ subnet ]] -o $VPN -j MASQUERADE;
 [% endfor %]
@@ -63,11 +63,11 @@ ip -6 route [[ rt ]] [[ network.ipv6_subnet ]] via [[ network.ipv6_gateway ]] de
 ip -6 route [[ rt ]] {{ipv6Cidr}} dev wg0 table 200;
 [% if direct_subnets or direct_subnets_ipv6 %]
 
-# Direct subnets: bypass sing-box, route straight to gluetun
+# Direct subnets: bypass both sing-box and gluetun, route to Docker gateway
 [% for subnet in direct_subnets %]
-ip route [[ rt ]] [[ subnet ]] via [[ gluetun_ipv4 ]] dev $VPN table 200;
+ip route [[ rt ]] [[ subnet ]] via [[ network.ipv4_gateway ]] dev $VPN table 200;
 [% endfor %]
 [% for subnet in direct_subnets_ipv6 %]
-ip -6 route [[ rt ]] [[ subnet ]] via [[ gluetun_ipv6 ]] dev $VPN table 200;
+ip -6 route [[ rt ]] [[ subnet ]] via [[ network.ipv6_gateway ]] dev $VPN table 200;
 [% endfor %]
 [% endif %]
