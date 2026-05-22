@@ -74,7 +74,7 @@ wg_easy:
   init:
     enabled: true
     username: "admin"
-    password: "qJGK9D&Gm!jzSziMST3laQuipHbN^&oF" # WG-Easy web UI password
+    password: "qJGK9D&Gm!jzSziMST3laQuipHbN^&oF" # CHANGE THIS!!!
     public_host: "127.0.0.1" # Server's public IP or domain (for client configs)
     ipv4_cidr: "10.8.0.0/24" # WireGuard client IP pool (IPv4)
     ipv6_cidr: "fdcc:beef:babe:cafe::/64" # WireGuard client IP pool (IPv6)
@@ -90,7 +90,7 @@ wg_easy:
 adguardhome:
   admin:
     username: "admin"
-    password_hash: "$2a$10$YwOm0m9XUnUs19xNKShGJez5vyUlj6BL/k15siRTbETStbpdrowOG"
+    password_hash: "$2a$10$YwOm0m9XUnUs19xNKShGJez5vyUlj6BL/k15siRTbETStbpdrowOG" # CHANGE THIS!!!
   upstream_dns:
     - "https://dns10.quad9.net/dns-query"
     - "tls://dns10.quad9.net"
@@ -114,7 +114,7 @@ adguardhome:
 # --- sing-box routing settings -------------------------------
 singbox:
   clash_api_port: 9090
-  clash_api_secret: "1Jjr%ogiPnFCp#Gd@1opp@v5!RzJsWYP" # Clash API authentication secret (leave empty for no password)
+  clash_api_secret: "1Jjr%ogiPnFCp#Gd@1opp@v5!RzJsWYP" # CHANGE THIS!!!
   routing_mark: 990 # fwmark for VPN-bound packets
   routing_table: 444 # Policy routing table ID
   routing_priority: 8000 # ip rule priority
