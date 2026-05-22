@@ -10,6 +10,10 @@
       "strict_route": true
     }
   ],
+  # In this project, the `gluetun` outbound is implemented as a sing-box `direct`
+  # outbound with a Linux routing mark. The mark is then handled by policy routing
+  # so the packet is sent through Gluetun. Therefore, `gluetun` and `direct` are both
+  # sing-box direct outbounds internally, but they use different Linux routing paths.
   "outbounds": [
     {
       "type": "direct",

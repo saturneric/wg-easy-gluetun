@@ -1,4 +1,4 @@
-# WireGuard Easy & Gluetun
+# WG-Easy & Gluetun
 
 Build your own self-hosted VPN gateway with a secure and privacy-enhanced exit.
 
@@ -19,7 +19,7 @@ masking.
 
 ## Table of Contents
 
-- [WireGuard Easy \& Gluetun](#wireguard-easy--gluetun)
+- [WG-Easy \& Gluetun](#wg-easy--gluetun)
   - [Table of Contents](#table-of-contents)
   - [Prerequisites](#prerequisites)
   - [Architecture](#architecture)
@@ -34,6 +34,7 @@ masking.
     - [Routing Rules (sing-box)](#routing-rules-sing-box)
     - [Direct Subnets (bypass sing-box)](#direct-subnets-bypass-sing-box)
     - [Port Forwarding](#port-forwarding)
+    - [Generated Runtime Files](#generated-runtime-files)
   - [Web Interfaces](#web-interfaces)
     - [WG-Easy](#wg-easy)
     - [AdGuard Home](#adguard-home)
@@ -65,30 +66,38 @@ flowchart TD
     pc["PC"]
     laptop["Laptop"]
   end
+
   subgraph server["Your Server"]
-    wgeasy["WG-Easy\n(WireGuard Server)"]
-    singbox["sing-box\n(Geo Router)"]
-    gluetun["Gluetun\n(VPN Client)"]
-    adguard["AdGuard Home\n(DNS)"]
+    wgeasy["WG-Easy (WireGuard Server)"]
+    singbox["sing-box (TUN Router / Geo Rules)"]
+    gluetun["Gluetun (VPN Provider Client)"]
+    adguard["AdGuard Home (Forced DNS)"]
   end
+
   phone  -- WireGuard --> wgeasy
   pc     -- WireGuard --> wgeasy
   laptop -- WireGuard --> wgeasy
-  wgeasy --> singbox
-  singbox -- bypass rules --> internet["Internet (direct)"]
-  singbox -- all other --> gluetun
-  gluetun -- VPN tunnel --> provider["VPN Provider"]
-  provider --> internet
-  wgeasy -. DNS .-> adguard
+
+  wgeasy -- DNS only --> adguard
+  wgeasy -- policy routing --> singbox
+
+  singbox -- bypass_rule_sets --> direct["Internet Direct"]
+  singbox -- default outbound --> gluetun
+  gluetun -- provider tunnel --> provider["VPN Provider"]
+  provider --> internet["Internet"]
+  direct --> internet
 ```
 
 **Traffic flow:**
 
-1. Device connects to wg-easy via WireGuard (encrypted)
-2. wg-easy forwards traffic to sing-box via policy routing
-3. sing-box checks geo-routing rules: matching bypass sets go direct, everything else continues
-4. Gluetun encapsulates remaining traffic through the VPN provider tunnel
-5. Traffic exits at the VPN provider's IP address
+1. Devices connect to WG-Easy through WireGuard.
+2. DNS requests from WireGuard clients are forced to AdGuard Home.
+3. Regular client traffic is policy-routed from WG-Easy to sing-box.
+4. sing-box applies rule-set based routing:
+   - traffic matching `bypass_rule_sets` goes direct;
+   - all other traffic is sent to Gluetun.
+5. Gluetun sends the remaining traffic through the upstream VPN provider.
+6. Optional `direct_subnets` can bypass sing-box entirely and go straight toward Gluetun-controlled routing.
 
 ## Quick Start
 
@@ -137,11 +146,10 @@ stack with the generated compose file.
 
 ### 4. Access Web Interfaces
 
-| Service      | URL                           |
-| ------------ | ----------------------------- |
-| WG-Easy      | `http://YOUR_SERVER_IP:51821` |
-| AdGuard Home | `http://172.31.0.16`          |
-| MetaCubeXD   | `http://YOUR_SERVER_IP:9091`  |
+| Service      | URL                           | Notes                                               |
+| ------------ | ----------------------------- | --------------------------------------------------- |
+| WG-Easy      | `http://YOUR_SERVER_IP:51821` | Exposed management UI                               |
+| AdGuard Home | `http://172.31.0.16`          | Internal access only, unless you expose it manually |
 
 ## Configuration
 
@@ -157,16 +165,15 @@ your templates using the appropriate keys (e.g. `[[ vpn.wireguard.private_key
 
 ### Key Settings
 
-| Section              | Key                                    | Description                                                |
-| -------------------- | -------------------------------------- | ---------------------------------------------------------- |
-| `vpn.wireguard`      | `private_key`, `addresses`, etc.       | WireGuard credentials from your VPN provider               |
-| `vpn`                | `service_provider`, `server_countries` | Gluetun provider and server selection                      |
-| `vpn`                | `firewall_outbound_subnets`            | Subnets allowed out without going through the VPN          |
-| `wg_easy.init`       | `password`, `public_host`              | WG-Easy web UI password and server public address          |
-| `adguardhome`        | `upstream_dns`                         | DNS upstream resolvers                                     |
-| `singbox`            | `bypass_rule_sets`                     | Geo rule sets whose traffic goes direct (not through VPN)  |
-| `singbox`            | `api_host`                             | Your server's LAN IP, pre-fills the MetaCubeXD backend URL |
-| `network.services.*` | `ipv4`, `ipv6`                         | Fixed container IPs (must match across all entries)        |
+| Section              | Key                                    | Description                                               |
+| -------------------- | -------------------------------------- | --------------------------------------------------------- |
+| `vpn.wireguard`      | `private_key`, `addresses`, etc.       | WireGuard credentials from your VPN provider              |
+| `vpn`                | `service_provider`, `server_countries` | Gluetun provider and server selection                     |
+| `vpn`                | `firewall_outbound_subnets`            | Subnets allowed out without going through the VPN         |
+| `wg_easy.init`       | `password`, `public_host`              | WG-Easy web UI password and server public address         |
+| `adguardhome`        | `upstream_dns`                         | DNS upstream resolvers                                    |
+| `singbox`            | `bypass_rule_sets`                     | Geo rule sets whose traffic goes direct (not through VPN) |
+| `network.services.*` | `ipv4`, `ipv6`                         | Fixed container IPs (must match across all entries)       |
 
 ### Adding WireGuard Clients
 
@@ -188,8 +195,11 @@ singbox:
       url: "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-openai.srs"
 ```
 
-Use `extra_rule_sets` to download rule sets without routing them, useful for
-activating them later via the MetaCubeXD dashboard.
+Use `extra_rule_sets` to predefine and download rule sets without using them in
+routing rules yet. They are available in the generated sing-box config, but they
+do not affect traffic unless referenced by a routing rule. To make one active,
+move it to `bypass_rule_sets` or add an explicit route rule in the sing-box
+template.
 
 ### Direct Subnets (bypass sing-box)
 
@@ -208,10 +218,34 @@ wg_easy:
 
 Open these ports on your server firewall / router:
 
-| Port    | Protocol | Service                   |
-| ------- | -------- | ------------------------- |
-| `51820` | UDP      | WireGuard VPN             |
-| `51821` | TCP      | WG-Easy web UI (optional) |
+| Port    | Protocol | Service                       |
+| ------- | -------- | ----------------------------- |
+| `51820` | UDP      | WireGuard VPN                 |
+| `51821` | TCP      | WG-Easy web UI (optional)     |
+| `9090`  | TCP      | sing-box Clash API (optional) |
+
+Do not expose WG-Easy, sing-box or AdGuard Home management interfaces to the
+public internet unless you put them behind proper authentication, TLS, and
+access control.
+
+### Generated Runtime Files
+
+`./up.sh` runs the config generator before starting the stack. The generator reads
+`config.yaml` and templates under `templates/`, then writes the runtime files
+under `runtime/`.
+
+Common generated files include:
+
+- `runtime/docker-compose.yml`
+- `runtime/.env`
+- `runtime/conf/hooks/wg-post-up.txt`
+- `runtime/conf/hooks/wg-post-down.txt`
+- `runtime/conf/iptables/post-rules.txt`
+- `runtime/conf/sing-box/config.json`
+- `runtime/conf/adguardhome/AdGuardHome.yaml`
+
+Do not edit these files directly. Edit `config.yaml` for normal configuration,
+or edit files under `templates/` for advanced customization.
 
 ## Web Interfaces
 
@@ -224,9 +258,9 @@ Manage WireGuard peers, download client configs, view connection status.
 DNS dashboard (accessible only from clients connected via WireGuard). Configure
 upstream resolvers, blocklists, and query logs.
 
-> AdGuard Home is optional. To disable it, remove the `adguardhome` service from
-> `templates/docker-compose.yml.j2` and set a public DNS in `vpn` → `DNS_UPSTREAM_PLAIN_ADDRESSES`
-> in `templates/env.j2`.
+AdGuard Home is integrated into the default DNS path. Disabling it requires more
+than removing the container: you must also update the WireGuard DNS settings and
+the generated firewall/hook templates that restrict DNS traffic to AdGuard Home.
 
 ## Management
 
@@ -297,6 +331,18 @@ upstream DNS errors.
 **sing-box routing issues:** Check `sing-box` logs for rule matching and routing
 decisions. You can use the MetaCubeXD dashboard for real-time traffic monitoring
 and rule testing.
+
+**WireGuard clients can connect but DNS does not work:** Check that AdGuard Home
+is running and reachable from WG-Easy. DNS from WireGuard clients is
+intentionally restricted to AdGuard Home.
+
+**WireGuard clients connect but have no internet:** Check the full chain in
+order: WG-Easy hook rules, sing-box TUN interface, sing-box route rules, Gluetun
+VPN status, then Gluetun firewall outbound subnets.
+
+**Bypass rules do not mean bypassing the server:** `bypass_rule_sets` only
+bypass the upstream VPN provider. Traffic still passes through your server and
+sing-box.
 
 ## Additional Resources
 
