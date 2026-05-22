@@ -1,8 +1,22 @@
 services:
+  # Runs once on every `docker compose up` to generate all config files from
+  # config.yaml + templates/.  All other services wait for it to finish.
+  config-gen:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.config-gen
+    volumes:
+      - .:/workspace
+    network_mode: none
+    restart: "no"
+
   wg-easy:
     build:
       context: .
       dockerfile: ./Dockerfile
+    depends_on:
+      config-gen:
+        condition: service_completed_successfully
     ports:
       - "51820:51820/udp"
       - "51821:51821/tcp"
@@ -20,25 +34,28 @@ services:
       - net.ipv6.conf.all.forwarding=1
       - net.ipv6.conf.default.forwarding=1
     env_file:
-      - .env
+      - ./runtime/.env
     volumes:
       - /lib/modules:/lib/modules:ro
-      - ./data/wg-easy:/etc/wireguard # Persist WireGuard configuration
+      - ./runtime/data/wg-easy:/etc/wireguard # Persist WireGuard configuration
     restart: unless-stopped
 
   gluetun:
     image: qmcgaw/gluetun:latest
+    depends_on:
+      config-gen:
+        condition: service_completed_successfully
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
     devices:
       - /dev/net/tun:/dev/net/tun
     env_file:
-      - .env
+      - ./runtime/.env
     volumes:
       - /lib/modules:/lib/modules:ro
-      - ./data/gluetun:/gluetun # Persist gluetun configuration
-      - ./conf/iptables/post-rules.txt:/iptables/post-rules.txt:ro
+      - ./runtime/data/gluetun:/gluetun # Persist gluetun configuration
+      - ./runtime/conf/iptables/post-rules.txt:/iptables/post-rules.txt:ro
     sysctls:
       - net.ipv4.ip_forward=1
       - net.ipv4.conf.all.src_valid_mark=1
@@ -55,9 +72,12 @@ services:
   # If you do not want to use Adguard Home, you can comment out or remove this service.
   adguardhome:
     image: adguard/adguardhome
+    depends_on:
+      config-gen:
+        condition: service_completed_successfully
     volumes:
-      - ./data/adguardhome/work:/opt/adguardhome/work
-      - ./conf/adguardhome:/opt/adguardhome/conf
+      - ./runtime/data/adguardhome/work:/opt/adguardhome/work
+      - ./runtime/conf/adguardhome:/opt/adguardhome/conf
     networks:
       vpn:
         ipv4_address: 172.31.0.16 # Fixed IPv4 address
@@ -68,10 +88,13 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile.sing-box
+    depends_on:
+      config-gen:
+        condition: service_completed_successfully
     restart: unless-stopped
     entrypoint: ["/bin/bash", "/etc/sing-box/entrypoint.sh"]
     volumes:
-      - ./conf/sing-box:/etc/sing-box
+      - ./runtime/conf/sing-box:/etc/sing-box
     cap_add:
       - NET_ADMIN
     devices:

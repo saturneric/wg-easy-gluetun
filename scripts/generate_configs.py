@@ -131,13 +131,13 @@ def write_file(path: Path, content: str, dry_run: bool) -> None:
 
 # (template relative to templates/, destination relative to project root, extra context)
 TARGETS: list[tuple[str, str, dict | None]] = [
-    ("env.j2",                      ".env",                         None),
-    ("hooks/wg-hook.txt.j2",        "conf/hooks/wg-post-up.txt",   {"action": "add"}),
-    ("hooks/wg-hook.txt.j2",        "conf/hooks/wg-post-down.txt", {"action": "del"}),
-    ("iptables/post-rules.txt.j2",  "conf/iptables/post-rules.txt", None),
-    ("sing-box/config.json.j2",                   "conf/sing-box/config.json",          None),
-    ("sing-box/entrypoint.sh.j2",                 "conf/sing-box/entrypoint.sh",        None),
-    ("adguardhome/AdGuardHome.yaml.j2",           "conf/adguardhome/AdGuardHome.yaml",  None),
+    ("env.j2",                          "runtime/.env",                              None),
+    ("hooks/wg-hook.txt.j2",            "runtime/conf/hooks/wg-post-up.txt",        {"action": "add"}),
+    ("hooks/wg-hook.txt.j2",            "runtime/conf/hooks/wg-post-down.txt",      {"action": "del"}),
+    ("iptables/post-rules.txt.j2",      "runtime/conf/iptables/post-rules.txt",     None),
+    ("sing-box/config.json.j2",         "runtime/conf/sing-box/config.json",        None),
+    ("sing-box/entrypoint.sh.j2",       "runtime/conf/sing-box/entrypoint.sh",      None),
+    ("adguardhome/AdGuardHome.yaml.j2", "runtime/conf/adguardhome/AdGuardHome.yaml",None),
 ]
 
 
@@ -174,7 +174,7 @@ def main() -> None:
         write_file(ROOT / dest_rel, content, dry_run=args.dry_run)
 
     if not args.dry_run:
-        (ROOT / "conf/sing-box/entrypoint.sh").chmod(0o755)
+        (ROOT / "runtime/conf/sing-box/entrypoint.sh").chmod(0o755)
         print()
         print("Done.  Restart the stack to apply changes:")
         print("  docker compose up -d")
