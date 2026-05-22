@@ -5,7 +5,7 @@
     "admin": {
       "panel": "Admin-paneel",
       "general": "Algemeen",
-      "config": "Config",
+      "config": "Configuratie",
       "interface": "Interface",
       "hooks": "Hooks"
     }
@@ -35,7 +35,7 @@
     "logout": "Uitloggen",
     "continue": "Doorgaan",
     "host": "Host",
-    "port": "Port",
+    "port": "Poort",
     "yes": "Ja",
     "no": "Nee",
     "confirmPassword": "Wachtwoord bevestigen",
@@ -120,7 +120,11 @@
     "endpointDesc": "IP van de cliënt vanaf welke de WireGuard-verbinding tot stand wordt gebracht",
     "search": "Cliënten zoeken...",
     "config": "Configuratie",
-    "viewConfig": "Configuratie weergeven"
+    "viewConfig": "Configuratie weergeven",
+    "firewallIps": "Firewall-toegestane IPs",
+    "firewallIpsDesc": "Bestemmings-IP's/CIDR's waartoe deze client toegang heeft (handhaving aan de serverzijde). Laat leeg om Toegestane IP's te gebruiken. Ondersteunt optionele poort - en protocolfiltering. Zie documentatie voor syntaxis.",
+    "downloadPng": "PNG downloaden",
+    "copyPng": "PNG kopiëren"
   },
   "dialog": {
     "change": "Wijzigen",
@@ -130,7 +134,8 @@
   "toast": {
     "success": "Succes",
     "saved": "Opgeslagen",
-    "error": "Fout"
+    "error": "Fout",
+    "unknown": "Onbekende fout. Zie console voor meer details"
   },
   "form": {
     "actions": "Acties",
@@ -175,14 +180,18 @@
       "restart": "Interface opnieuw starten",
       "restartDesc": "WireGuard-interface opnieuw starten",
       "restartWarn": "Weet u zeker dat u de interface wilt herstarten? Dit zal alle cliënten loskoppelen.",
-      "restartSuccess": "Interface opnieuw gestart"
+      "restartSuccess": "Interface opnieuw gestart",
+      "firewall": "Traffic-filtering",
+      "firewallEnabled": "Per-Client Firewall inschakelen",
+      "firewallEnabledDesc": "Beperk het cliëntverkeer tot specifieke bestemmings-IP's met behulp van iptables. Indien ingeschakeld, kan elke cliënt worden geconfigureerd met toegestane bestemmingen."
     },
     "introText": "Welkom bij het Admin-paneel.\n\nHier kunt u de algemene instellingen, de configuratie, de interface-instellingen en de hooks beheren.\n\nBegin met het kiezen van een van de secties in de zijbalk."
   },
   "zod": {
     "generic": {
       "required": "{0} is vereist",
-      "validNumber": "{0} moet een geldig nummer zijn",
+      "validNumber": "{0} moet een geldig getal zijn",
+      "validNumberRange": "{0} moet een geldig getal of bereik zijn",
       "validString": "{0} moet een geldige tekenreeks zijn",
       "validBoolean": "{0} moet een geldige boolean zijn",
       "validArray": "{0} moet een geldige array zijn",
@@ -195,7 +204,9 @@
       "expiresAt": "Verloopt op",
       "address4": "IPv4-adres",
       "address6": "IPv6-adres",
-      "serverAllowedIps": "Toegestane IP's van de server"
+      "serverAllowedIps": "Toegestane IP's van de server",
+      "firewallIps": "Firewall-toegestane IPs",
+      "firewallIpsInvalid": "Ongeldige IP-invoer van firewall. Zie documentatie voor ondersteunde syntaxis."
     },
     "user": {
       "username": "Gebruikersnaam",
@@ -262,6 +273,14 @@
     "s3Description": "Grootte Cookie reply packet junk",
     "s4Label": "Transport packet junk size (S4)",
     "s4Description": "Grootte Transport packet junk",
+    "h1Label": "Init magic header (H1)",
+    "h1Description": "Waarde of bereik Init packet header (X of X-Y, waarbij X<Y. Min. 5, max. 2147483647. Waarde of bereik mag niet overlappen met andere headers)",
+    "h2Label": "Response magic header (H2)",
+    "h2Description": "Waarde of bereik Response packet header (X of X-Y, waarbij X<Y. Min. 5, max. 2147483647. Waarde of bereik mag niet overlappen met andere headers)",
+    "h3Label": "Cookie reply magic header (H3)",
+    "h3Description": "Waarde of bereik Cookie reply packet header (X of X-Y, waarbij X<Y. Min. 5, max. 2147483647. Waarde of bereik mag niet overlappen met andere headers)",
+    "h4Label": "Transport magic header (H4)",
+    "h4Description": "Waarde of bereik Transport packet header (X of X-Y, waarbij X<Y. Min. 5, max. 2147483647. Waarde of bereik mag niet overlappen met andere headers)",
     "i1Label": "Special junk packet 1 (I1)",
     "i1Description": "Protocol mimic packet in hex formaat: <b 0x...>",
     "i2Label": "Special junk packet 2 (I2)",
@@ -272,14 +291,6 @@
     "i4Description": "Protocol mimic packet in hex formaat: <b 0x...>",
     "i5Label": "Special junk packet 5 (I5)",
     "i5Description": "Protocol mimic packet in hex formaat: <b 0x...>",
-    "h1Label": "Init magic header (H1)",
-    "h1Description": "Waarde Init packet header (5-2147483647, moet uniek zijn t.o.v. H2-H4)",
-    "h2Label": "Response magic header (H2)",
-    "h2Description": "Waarde Response packet header (5-2147483647, moet uniek zijn t.o.v. H1, H3, H4)",
-    "h3Label": "Cookie reply magic header (H3)",
-    "h3Description": "Waarde Cookie reply packet header (5-2147483647, moet uniek zijn t.o.v. H1, H2, H4)",
-    "h4Label": "Transport magic header (H4)",
-    "h4Description": "Waarde Transport packet header (5-2147483647, moet uniek zijn t.o.v. H1-H3)",
     "mtuNote": "Waarden zijn afhankelijk van de MTU",
     "obfuscationParameters": "AmneziaWG Obfuscation Parameters"
   }

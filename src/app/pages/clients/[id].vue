@@ -2,7 +2,9 @@
   <main v-if="data">
     <Panel>
       <PanelHead>
-        <PanelHeadTitle :text="data.name" />
+        <PanelHeadTitle>
+          {{ data.name }}
+        </PanelHeadTitle>
       </PanelHead>
       <PanelBody>
         <FormElement @submit.prevent="submit">
@@ -60,6 +62,12 @@
               v-model="data.serverAllowedIps"
               name="serverAllowedIps"
             />
+          </FormGroup>
+          <FormGroup v-if="globalStore.information?.firewallEnabled">
+            <FormHeading :description="$t('client.firewallIpsDesc')">
+              {{ $t('client.firewallIps') }}
+            </FormHeading>
+            <FormNullArrayField v-model="data.firewallIps" name="firewallIps" />
           </FormGroup>
           <FormGroup>
             <FormHeading :description="$t('client.dnsDesc')">
@@ -141,25 +149,25 @@
             <FormHeading :description="$t('client.hooksDescription')">
               {{ $t('client.hooks') }}
             </FormHeading>
-            <FormTextField
+            <FormTextArea
               id="PreUp"
               v-model="data.preUp"
               :description="$t('client.hooksLeaveEmpty')"
               :label="$t('hooks.preUp')"
             />
-            <FormTextField
+            <FormTextArea
               id="PostUp"
               v-model="data.postUp"
               :description="$t('client.hooksLeaveEmpty')"
               :label="$t('hooks.postUp')"
             />
-            <FormTextField
+            <FormTextArea
               id="PreDown"
               v-model="data.preDown"
               :description="$t('client.hooksLeaveEmpty')"
               :label="$t('hooks.preDown')"
             />
-            <FormTextField
+            <FormTextArea
               id="PostDown"
               v-model="data.postDown"
               :description="$t('client.hooksLeaveEmpty')"

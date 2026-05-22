@@ -1,0 +1,6 @@
+allowBuilds:
+  '@parcel/watcher': false
+  argon2: false
+  esbuild: false
+  unrs-resolver: false
+  vue-demi: false

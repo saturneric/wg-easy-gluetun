@@ -6,6 +6,20 @@ hide:
 
 Here are some frequently asked questions or errors about `wg-easy`. If you have a question that is not answered here, please feel free to open a discussion on GitHub.
 
+## How do I restrict client access to specific networks or servers?
+
+Use the **Per-Client Firewall** feature to enforce server-side restrictions on what each client can access.
+
+**Requirements:** This feature requires `iptables` (and `ip6tables` for IPv6) to be installed on the host system.
+
+1. Enable "Per-Client Firewall" in **Admin Panel → Interface**
+2. Edit a client and configure "Firewall Allowed IPs"
+3. Specify which destinations the client should be allowed to access
+
+Unlike "Allowed IPs" which only controls client-side routing, firewall rules are enforced by the server and cannot be bypassed.
+
+See the [Admin Panel Guide](./guides/admin.md#per-client-firewall) and [Client Guide](./guides/clients.md#firewall-allowed-ips) for detailed configuration.
+
 ## Error: WireGuard exited with the error: Cannot find device "wg0"
 
 This error indicates that the WireGuard interface `wg0` does not exist. This can happen if the WireGuard kernel module is not loaded or if the interface was not created properly.
@@ -95,3 +109,31 @@ To resolve this issue, you can try the following steps:
     ```shell
      echo "ip6table_filter" | sudo tee -a /etc/modules
     ```
+
+## Clients lose connectivity after restarting the container when using multiple networks?
+
+When you attach multiple Docker networks (e.g., `wg` and a reverse proxy network like `traefik` or `nginx`) to the `wg-easy` container, Docker might assign the network interfaces randomly (e.g., swapping `eth0` and `eth1`). Since `wg-easy` expects the wireguard interface to act as `eth0` and configures `POSTROUTING` rules for it, connectivity will break if the interfaces are swapped upon container restart.
+
+To solve this, specify the `interface_name` and `gw_priority` explicitly in your `docker-compose.yml` file to guarantee that the `wg` network always binds to `eth0` and acts as the default gateway.
+
+**Example `docker-compose.yml`:**
+
+```yaml
+services:
+    wg-easy:
+        # ... other configuration ...
+        networks:
+            wg:
+                interface_name: eth0
+                gw_priority: 1
+                ipv4_address: 10.42.42.42
+            nginx:
+                interface_name: eth1
+                gw_priority: 0
+
+networks:
+    wg:
+        # ... wg network config ...
+    nginx:
+        external: true
+```
