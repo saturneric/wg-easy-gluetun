@@ -1,5 +1,5 @@
 {
-  "log": {"level": "info"},
+  "log": {"level": "error"},
   "inbounds": [
     {
       "type": "tun",
@@ -47,7 +47,9 @@
     "cache_file": {"enabled": true},
     "clash_api": {
       "external_controller": "0.0.0.0:[[ singbox.clash_api_port ]]",
-      "secret": "[[ singbox.clash_api_secret ]]"
+      "secret": "[[ singbox.clash_api_secret ]]",
+      "access_control_allow_origin": ["*"],
+      "access_control_allow_private_network": true
     }
   }
 }
