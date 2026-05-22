@@ -81,8 +81,8 @@ def build_context(cfg: dict) -> dict:
     vpn = cfg["vpn"]
     wg  = cfg["wg_easy"]
 
-    bypass_sets = sb.get("bypass_rule_sets", [])
-    extra_sets  = sb.get("extra_rule_sets",  [])
+    bypass_sets = sb.get("bypass_rule_sets") or []
+    extra_sets  = sb.get("extra_rule_sets") or []
 
     return {
         # Top-level config sections (accessible as e.g. [[ vpn.wireguard.private_key ]])
