@@ -113,14 +113,16 @@ adguardhome:
 
 # --- sing-box routing settings -------------------------------
 singbox:
+  # API for monitoring dynamic routing rules and status. Accessed by MetaCubeXD
+  # and future dashboard. CHANGE THE SECRET!!!
   clash_api_port: 9090
   clash_api_secret: "1Jjr%ogiPnFCp#Gd@1opp@v5!RzJsWYP" # CHANGE THIS!!!
   routing_mark: 990 # fwmark for VPN-bound packets
   routing_table: 444 # Policy routing table ID
   routing_priority: 8000 # ip rule priority
 
-  # Rule sets whose traffic bypasses the VPN and goes direct.
-  # All other traffic is routed through gluetun.
+  # Rule sets whose traffic bypasses the VPN and goes direct. All other traffic
+  # is routed through gluetun.
   bypass_rule_sets:
     # - tag: "geosite-apple"
     #   url: "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-apple.srs"
