@@ -25,6 +25,7 @@ services:
     volumes:
       - /lib/modules:/lib/modules:ro
       - ./runtime/data/wg-easy:/etc/wireguard
+      - ./runtime/conf/hooks:/hooks:ro
     restart: unless-stopped
 
   gluetun:

@@ -304,7 +304,6 @@ and rule testing.
 - [Gluetun Wiki](https://github.com/qdm12/gluetun-wiki)
 - [WG-Easy](https://wg-easy.github.io/wg-easy/)
 - [sing-box Documentation](https://sing-box.sagernet.org/)
-- [MetaCubeXD](https://github.com/MetaCubeX/metacubexd)
 - [Docker Compose Documentation](https://docs.docker.com/compose/)
 
 ## Contributing

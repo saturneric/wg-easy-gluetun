@@ -6,6 +6,4 @@ RUN apk add --no-cache \
     ca-certificates \
  && update-ca-certificates
 
-COPY --chmod=755 scripts/entrypoint.sing-box.sh /entrypoint.sh
-
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/bin/bash", "/etc/sing-box/entrypoint.sh"]

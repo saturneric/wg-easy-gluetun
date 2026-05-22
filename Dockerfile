@@ -71,9 +71,6 @@ RUN ln -s /etc/wireguard /etc/amnezia/amneziawg
 RUN update-alternatives --install /usr/sbin/iptables iptables /usr/sbin/iptables-legacy 10 --slave /usr/sbin/iptables-restore iptables-restore /usr/sbin/iptables-legacy-restore --slave /usr/sbin/iptables-save iptables-save /usr/sbin/iptables-legacy-save
 RUN update-alternatives --install /usr/sbin/ip6tables ip6tables /usr/sbin/ip6tables-legacy 10 --slave /usr/sbin/ip6tables-restore ip6tables-restore /usr/sbin/ip6tables-legacy-restore --slave /usr/sbin/ip6tables-save ip6tables-save /usr/sbin/ip6tables-legacy-save
 
-# Hooks setting up iptables and routing rules in the container.
-COPY --chown=root:root --chmod=0644 conf/hooks /hooks
-
 # Set Environment
 ENV DEBUG=Server,WireGuard,Database,CMD,Firewall
 ENV PORT=51821
