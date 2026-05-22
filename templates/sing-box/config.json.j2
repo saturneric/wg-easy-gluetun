@@ -1,0 +1,53 @@
+{
+  "log": {"level": "info"},
+  "inbounds": [
+    {
+      "type": "tun",
+      "tag": "tun-in",
+      "interface_name": "tun0",
+      "address": ["[[ svc.singbox.tun_ipv4 ]]", "[[ svc.singbox.tun_ipv6 ]]"],
+      "auto_route": true,
+      "strict_route": true
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "gluetun",
+      "routing_mark": [[ singbox.routing_mark ]]
+    },
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ],
+  "route": {
+    "rules": [
+      {"inbound": "tun-in", "action": "sniff"},
+      {"ip_is_private": true, "outbound": "direct"},
+[% if bypass_tags %]
+      {"rule_set": [[ bypass_tags | tojson ]], "outbound": "direct"},
+[% endif %]
+      {"outbound": "gluetun"}
+    ],
+    "rule_set": [
+[% for rs in all_rule_sets %]
+      {
+        "tag": [[ rs.tag | tojson ]],
+        "type": "remote",
+        "format": "binary",
+        "url": [[ rs.url | tojson ]],
+        "download_detour": "direct"
+      }[[ "," if not loop.last else "" ]]
+[% endfor %]
+    ],
+    "auto_detect_interface": true
+  },
+  "experimental": {
+    "cache_file": {"enabled": true},
+    "clash_api": {
+      "external_controller": "0.0.0.0:[[ singbox.clash_api_port ]]",
+      "secret": "[[ singbox.clash_api_secret ]]"
+    }
+  }
+}

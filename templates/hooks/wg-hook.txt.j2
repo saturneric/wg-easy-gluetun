@@ -1,0 +1,73 @@
+[%- set ipt = "-A" if action == "add" else "-D" -%]
+[%- set rt  = action -%]
+# [[ NOTE ]]
+
+# Detect the VPN bridge interface by wg-easy's container IP
+VPN=$(ip -o -4 addr show | awk '$4 ~ /^[[ wg_easy_ip_esc ]]\// {print $2; exit}'); test -n "$VPN";
+
+iptables -P FORWARD DROP;
+ip6tables -P FORWARD DROP;
+
+iptables [[ ipt ]] INPUT -p udp -m udp --dport {{port}} -j ACCEPT;
+ip6tables [[ ipt ]] INPUT -p udp -m udp --dport {{port}} -j ACCEPT;
+
+# DNS: container → AdGuardHome only
+iptables [[ ipt ]] OUTPUT -o $VPN -d [[ adguard_ipv4 ]] -p udp --dport 53 -j ACCEPT;
+iptables [[ ipt ]] OUTPUT -o $VPN -d [[ adguard_ipv4 ]] -p tcp --dport 53 -j ACCEPT;
+ip6tables [[ ipt ]] OUTPUT -o $VPN -d [[ adguard_ipv6 ]] -p udp --dport 53 -j ACCEPT;
+ip6tables [[ ipt ]] OUTPUT -o $VPN -d [[ adguard_ipv6 ]] -p tcp --dport 53 -j ACCEPT;
+
+# DNS: wg0 clients → AdGuardHome only
+iptables [[ ipt ]] FORWARD -i wg0 -o $VPN -d [[ adguard_ipv4 ]] -p udp --dport 53 -j ACCEPT;
+iptables [[ ipt ]] FORWARD -i wg0 -o $VPN -d [[ adguard_ipv4 ]] -p tcp --dport 53 -j ACCEPT;
+ip6tables [[ ipt ]] FORWARD -i wg0 -o $VPN -d [[ adguard_ipv6 ]] -p udp --dport 53 -j ACCEPT;
+ip6tables [[ ipt ]] FORWARD -i wg0 -o $VPN -d [[ adguard_ipv6 ]] -p tcp --dport 53 -j ACCEPT;
+
+# Block all other forwarded DNS
+iptables [[ ipt ]] FORWARD -i wg0 -p udp --dport 53 -j REJECT;
+iptables [[ ipt ]] FORWARD -i wg0 -p tcp --dport 53 -j REJECT;
+ip6tables [[ ipt ]] FORWARD -i wg0 -p udp --dport 53 -j REJECT;
+ip6tables [[ ipt ]] FORWARD -i wg0 -p tcp --dport 53 -j REJECT;
+
+iptables [[ ipt ]] FORWARD -i wg0 -j ACCEPT;
+iptables [[ ipt ]] FORWARD -o wg0 -m state --state RELATED,ESTABLISHED -j ACCEPT;
+iptables [[ ipt ]] FORWARD -s {{ipv4Cidr}} -d {{ipv4Cidr}} -i wg0 -o wg0 -j ACCEPT;
+ip6tables [[ ipt ]] FORWARD -i wg0 -j ACCEPT;
+ip6tables [[ ipt ]] FORWARD -o wg0 -m state --state RELATED,ESTABLISHED -j ACCEPT;
+ip6tables [[ ipt ]] FORWARD -s {{ipv6Cidr}} -d {{ipv6Cidr}} -i wg0 -o wg0 -j ACCEPT;
+
+# NAT: sing-box traffic skips masquerade; everything else bound for the VPN network is masqueraded
+iptables -t nat [[ ipt ]] POSTROUTING -s {{ipv4Cidr}} -d [[ singbox_ipv4 ]]/32 -o $VPN -j RETURN;
+iptables -t nat [[ ipt ]] POSTROUTING -s {{ipv4Cidr}} -d [[ network.ipv4_subnet ]] -o $VPN -j MASQUERADE;
+ip6tables -t nat [[ ipt ]] POSTROUTING -s {{ipv6Cidr}} -d [[ singbox_ipv6 ]]/128 -o $VPN -j RETURN;
+ip6tables -t nat [[ ipt ]] POSTROUTING -s {{ipv6Cidr}} -d [[ network.ipv6_subnet ]] -o $VPN -j MASQUERADE;
+[% if direct_subnets or direct_subnets_ipv6 %]
+
+# NAT for direct subnets (bypass sing-box → gluetun)
+[% for subnet in direct_subnets %]
+iptables -t nat [[ ipt ]] POSTROUTING -s {{ipv4Cidr}} -d [[ subnet ]] -o $VPN -j MASQUERADE;
+[% endfor %]
+[% for subnet in direct_subnets_ipv6 %]
+ip6tables -t nat [[ ipt ]] POSTROUTING -s {{ipv6Cidr}} -d [[ subnet ]] -o $VPN -j MASQUERADE;
+[% endfor %]
+[% endif %]
+
+# Policy routing table 200: default route via sing-box; local VPN network via bridge gateway
+ip rule [[ rt ]] from {{ipv4Cidr}} table 200;
+ip route [[ rt ]] default via [[ singbox_ipv4 ]] dev $VPN table 200;
+ip route [[ rt ]] [[ network.ipv4_subnet ]] via [[ network.ipv4_gateway ]] dev $VPN table 200;
+ip route [[ rt ]] {{ipv4Cidr}} dev wg0 table 200;
+ip -6 rule [[ rt ]] from {{ipv6Cidr}} table 200;
+ip -6 route [[ rt ]] default via [[ singbox_ipv6 ]] dev $VPN table 200;
+ip -6 route [[ rt ]] [[ network.ipv6_subnet ]] via [[ network.ipv6_gateway ]] dev $VPN table 200;
+ip -6 route [[ rt ]] {{ipv6Cidr}} dev wg0 table 200;
+[% if direct_subnets or direct_subnets_ipv6 %]
+
+# Direct subnets: bypass sing-box, route straight to gluetun
+[% for subnet in direct_subnets %]
+ip route [[ rt ]] [[ subnet ]] via [[ gluetun_ipv4 ]] dev $VPN table 200;
+[% endfor %]
+[% for subnet in direct_subnets_ipv6 %]
+ip -6 route [[ rt ]] [[ subnet ]] via [[ gluetun_ipv6 ]] dev $VPN table 200;
+[% endfor %]
+[% endif %]

@@ -1,0 +1,50 @@
+#!/bin/bash
+# [[ NOTE ]]
+set -euo pipefail
+
+sleep 2
+
+MARK=[[ singbox.routing_mark ]]
+TABLE=[[ singbox.routing_table ]]
+PRIORITY=[[ singbox.routing_priority ]]
+
+VPN_IPV4="[[ singbox_ipv4 ]]"
+VPN_GW4="[[ gluetun_ipv4 ]]"
+VPN_GW6="[[ gluetun_ipv6 ]]"
+
+VPN=$(ip -o -4 addr show | awk -v ip="$VPN_IPV4" '$0 ~ ip {print $2; exit}')
+
+if [ -z "${VPN:-}" ]; then
+  echo "Cannot find interface with IPv4 address $VPN_IPV4"
+  ip -4 addr show
+  exit 1
+fi
+
+echo "Policy route interface: $VPN"
+
+WG_EASY_IPV4="[[ svc.wg_easy.ipv4 ]]"
+WG_EASY_IPV6="[[ svc.wg_easy.ipv6 ]]"
+WG_CLIENT_IPV4_CIDR="[[ wg_easy.init.ipv4_cidr ]]"
+WG_CLIENT_IPV6_CIDR="[[ wg_easy.init.ipv6_cidr ]]"
+
+# Route WireGuard client CIDRs back to wg-easy
+ip route replace "$WG_CLIENT_IPV4_CIDR" via "$WG_EASY_IPV4" dev "$VPN" onlink
+ip -6 route replace "$WG_CLIENT_IPV6_CIDR" via "$WG_EASY_IPV6" dev "$VPN" onlink
+
+# IPv4: fwmark $MARK → table $TABLE → default via gluetun
+ip rule del fwmark "$MARK" table "$TABLE" 2>/dev/null || true
+ip rule add fwmark "$MARK" table "$TABLE" priority "$PRIORITY"
+ip route flush table "$TABLE" 2>/dev/null || true
+ip route add default via "$VPN_GW4" dev "$VPN" table "$TABLE" onlink
+
+# IPv6: fwmark $MARK → table $TABLE → default via gluetun
+ip -6 rule del fwmark "$MARK" table "$TABLE" 2>/dev/null || true
+ip -6 rule add fwmark "$MARK" table "$TABLE" priority "$PRIORITY"
+ip -6 route flush table "$TABLE" 2>/dev/null || true
+ip -6 route add default via "$VPN_GW6" dev "$VPN" table "$TABLE" onlink
+
+echo "=== ip rules ===" && ip rule show && ip -6 rule show || true
+echo "=== table $TABLE ===" && ip route show table "$TABLE" && ip -6 route show table "$TABLE" || true
+echo "=== route test ===" && ip route get 1.1.1.1 || true && ip route get 1.1.1.1 mark "$MARK" || true
+
+exec sing-box -D /var/lib/sing-box -C /etc/sing-box/ run
