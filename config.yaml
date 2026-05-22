@@ -74,15 +74,15 @@ wg_easy:
   init:
     enabled: true
     username: "admin"
-    password: ""                          # WG-Easy web UI password
-    public_host: "127.0.0.1"             # Server's public IP or domain (for client configs)
-    ipv4_cidr: "10.8.0.0/24"             # WireGuard client IP pool (IPv4)
+    password: "qJGK9D&Gm!jzSziMST3laQuipHbN^&oF" # WG-Easy web UI password
+    public_host: "127.0.0.1" # Server's public IP or domain (for client configs)
+    ipv4_cidr: "10.8.0.0/24" # WireGuard client IP pool (IPv4)
     ipv6_cidr: "fdcc:beef:babe:cafe::/64" # WireGuard client IP pool (IPv6)
 
-  # Subnets that bypass sing-box and route directly to gluetun (still goes through
-  # the VPN tunnel unless gluetun's FIREWALL_OUTBOUND_SUBNETS also allows them out).
-  # More-specific routes in table 200 take precedence over the default via sing-box.
-  # Example: local LAN access — gluetun allows 192.168.0.0/16 outbound without VPN.
+  # Subnets that bypass both sing-box and gluetun, routed directly to the Docker
+  # gateway (no VPN tunnel). More-specific routes in table 200 take precedence over
+  # the default via sing-box.
+  # Example: local LAN access — 192.168.0.0/16 goes straight to the host network.
   direct_subnets: []
   direct_subnets_ipv6: []
 
@@ -127,11 +127,11 @@ singbox:
 
   # Additional rule sets downloaded but not used in routing rules (for future use).
   extra_rule_sets:
-    - tag: "geosite-openai"
-      url: "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-openai.srs"
-    - tag: "geosite-paypal"
-      url: "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-paypal.srs"
-    - tag: "geosite-google"
-      url: "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-google.srs"
-    - tag: "geosite-amazon"
-      url: "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-amazon.srs"
+    # - tag: "geosite-openai"
+    #   url: "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-openai.srs"
+    # - tag: "geosite-paypal"
+    #   url: "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-paypal.srs"
+    # - tag: "geosite-google"
+    #   url: "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-google.srs"
+    # - tag: "geosite-amazon"
+    #   url: "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-amazon.srs"
