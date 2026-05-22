@@ -2,6 +2,7 @@
 *.swp
 node_modules
 runtime/
+.vscode/
 
 # python
 __pycache__/
