@@ -2,15 +2,17 @@
 # wg-easy-gluetun centralized configuration
 #
 # Edit this file, then run:
-#   python scripts/generate_configs.py
+#   ./up.sh -d      (first time or after config changes)
+#   docker compose up -d    (subsequent starts, once runtime/ exists)
 #
-# Generated files (do not edit manually):
-#   .env
-#   conf/hooks/wg-post-up.txt
-#   conf/hooks/wg-post-down.txt
-#   conf/iptables/post-rules.txt
-#   conf/sing-box/config.json
-#   conf/sing-box/entrypoint.sh
+# Generated files (do not edit manually, all under runtime/):
+#   runtime/.env
+#   runtime/conf/hooks/wg-post-up.txt
+#   runtime/conf/hooks/wg-post-down.txt
+#   runtime/conf/iptables/post-rules.txt
+#   runtime/conf/sing-box/config.json
+#   runtime/conf/sing-box/entrypoint.sh
+#   runtime/conf/adguardhome/AdGuardHome.yaml
 #
 # NOTE: network.services.* IPs must match docker-compose.yml.
 #       If you change them here, also update docker-compose.yml
