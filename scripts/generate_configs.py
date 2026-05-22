@@ -131,6 +131,7 @@ def write_file(path: Path, content: str, dry_run: bool) -> None:
 
 # (template relative to templates/, destination relative to project root, extra context)
 TARGETS: list[tuple[str, str, dict | None]] = [
+    ("docker-compose.yml.j2",           "runtime/docker-compose.yml",                None),
     ("env.j2",                          "runtime/.env",                              None),
     ("hooks/wg-hook.txt.j2",            "runtime/conf/hooks/wg-post-up.txt",        {"action": "add"}),
     ("hooks/wg-hook.txt.j2",            "runtime/conf/hooks/wg-post-down.txt",      {"action": "del"}),

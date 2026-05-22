@@ -1,0 +1,14 @@
+# Bootstrap compose file — runs config-gen once to produce:
+#   docker-compose.yml   (the full service stack)
+#   runtime/             (all runtime configs and data dirs)
+#
+# Do NOT use this file directly. Use ./up.sh instead.
+services:
+  config-gen:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.config-gen
+    volumes:
+      - .:/workspace
+    network_mode: none
+    restart: "no"
