@@ -2,10 +2,10 @@
 # wg-easy-gluetun centralized configuration
 #
 # Edit this file, then run:
-#   ./up.sh -d      (first time or after config changes)
-#   docker compose up -d    (subsequent starts, once runtime/ exists)
+#   ./up.sh -d      (always — generates runtime/ then starts the stack)
 #
 # Generated files (do not edit manually, all under runtime/):
+#   runtime/docker-compose.yml
 #   runtime/.env
 #   runtime/conf/hooks/wg-post-up.txt
 #   runtime/conf/hooks/wg-post-down.txt
@@ -13,10 +13,6 @@
 #   runtime/conf/sing-box/config.json
 #   runtime/conf/sing-box/entrypoint.sh
 #   runtime/conf/adguardhome/AdGuardHome.yaml
-#
-# NOTE: network.services.* IPs must match docker-compose.yml.
-#       If you change them here, also update docker-compose.yml
-#       and restart the stack.
 # ============================================================
 
 # --- Network topology ----------------------------------------
@@ -118,26 +114,24 @@ adguardhome:
 # --- sing-box routing settings -------------------------------
 singbox:
   clash_api_port: 9090
-  clash_api_secret: ""                    # Clash API authentication secret
-  routing_mark: 990                       # fwmark for VPN-bound packets
-  routing_table: 444                      # Policy routing table ID
-  routing_priority: 8000                  # ip rule priority
+  clash_api_secret: "1Jjr%ogiPnFCp#Gd@1opp@v5!RzJsWYP" # Clash API authentication secret (leave empty for no password)
+  routing_mark: 990 # fwmark for VPN-bound packets
+  routing_table: 444 # Policy routing table ID
+  routing_priority: 8000 # ip rule priority
 
   # Rule sets whose traffic bypasses the VPN and goes direct.
   # All other traffic is routed through gluetun.
   bypass_rule_sets:
-    - tag: "geoip-cn"
-      url: "https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/geoip-cn.srs"
+    # - tag: "geosite-apple"
+    #   url: "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-apple.srs"
+
+  # Additional rule sets downloaded but not used in routing rules (for future use).
+  extra_rule_sets:
     - tag: "geosite-openai"
       url: "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-openai.srs"
     - tag: "geosite-paypal"
       url: "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-paypal.srs"
-
-  # Additional rule sets downloaded but not used in routing rules (for future use).
-  extra_rule_sets:
     - tag: "geosite-google"
       url: "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-google.srs"
     - tag: "geosite-amazon"
       url: "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-amazon.srs"
-    - tag: "geosite-apple"
-      url: "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-apple.srs"
